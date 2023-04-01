@@ -1,9 +1,10 @@
 package com.ithersta.tgbotapi.entities
 
-import com.ithersta.tgbotapi.StatefulContext
+import com.ithersta.tgbotapi.StatefulContextImpl
 import com.ithersta.tgbotapi.basetypes.MessageState
 import com.ithersta.tgbotapi.basetypes.User
 import com.ithersta.tgbotapi.persistence.MessageRepository
+import dev.inmo.tgbotapi.extensions.api.answers.answer
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
 import dev.inmo.tgbotapi.extensions.utils.callbackQueryUpdateOrNull
 import dev.inmo.tgbotapi.extensions.utils.dataCallbackQueryOrNull
@@ -13,6 +14,7 @@ import dev.inmo.tgbotapi.extensions.utils.messageCallbackQueryOrNull
 import dev.inmo.tgbotapi.types.MessageId
 import dev.inmo.tgbotapi.types.UserId
 import dev.inmo.tgbotapi.types.chat.Chat
+import dev.inmo.tgbotapi.types.queries.callback.DataCallbackQuery
 import dev.inmo.tgbotapi.types.update.abstracts.Update
 import dev.inmo.tgbotapi.utils.PreviewFeature
 
@@ -31,13 +33,13 @@ public class Dispatcher(
             ?.let { messageId -> (messageRepository.get(chatId, messageId) ?: MessageState.Empty) to messageId }
             ?: messageRepository.getLast(chatId)
             ?: (MessageState.Empty to -1L)
-        val data = update.toData(chatId = chatId, messageId = messageId)
+        val data = update.toData(chatId = chatId, messageId = messageId) { answer(it) }
         val stateAccessor = StateAccessor.Static(
             snapshot = state,
             _edit = { handleStateChange(chat, getUser, messageId, it, ::handleOnEdit) },
             _new = { handleStateChange(chat, getUser, null, it, ::handleOnNew) }
         )
-        val context = StatefulContext(bot, stateAccessor, chat, messageId, getUser())
+        val context = StatefulContextImpl(bot, stateAccessor, chat, messageId, getUser())
         handle(context, data)
     }
 
@@ -46,24 +48,24 @@ public class Dispatcher(
         getUser: () -> User,
         messageId: M,
         state: MessageState,
-        handle: suspend (StatefulContext<*, StateAccessor.Changing<*>, *, M>) -> Unit
+        handle: suspend (StatefulContextImpl<*, StateAccessor.Changing<*>, *, M>) -> Unit
     ) {
         val stateAccessor = StateAccessor.Changing(
             snapshot = state,
             _new = { handleStateChange(chat, getUser, null, it, ::handleOnNew) },
             _persist = { messageRepository.save(it) }
         )
-        val context = StatefulContext(bot, stateAccessor, chat, messageId, getUser())
+        val context = StatefulContextImpl(bot, stateAccessor, chat, messageId, getUser())
         handle(context)
     }
 
-    private suspend fun handle(context: StatefulContext<*, StateAccessor.Static<*>, *, MessageId>, data: Any) =
+    private suspend fun handle(context: StatefulContextImpl<*, StateAccessor.Static<*>, *, MessageId>, data: Any) =
         messageSpecs.any { it.handle(context, data) }
 
-    private suspend fun handleOnEdit(context: StatefulContext<*, StateAccessor.Changing<*>, *, MessageId>) =
+    private suspend fun handleOnEdit(context: StatefulContextImpl<*, StateAccessor.Changing<*>, *, MessageId>) =
         messageSpecs.any { it.handleOnEdit(context) }
 
-    private suspend fun handleOnNew(context: StatefulContext<*, StateAccessor.Changing<*>, *, Nothing?>) =
+    private suspend fun handleOnNew(context: StatefulContextImpl<*, StateAccessor.Changing<*>, *, Nothing?>) =
         messageSpecs.any { it.handleOnNew(context) }
 
     @OptIn(PreviewFeature::class)
@@ -73,9 +75,12 @@ public class Dispatcher(
         return callbackQueryUpdateOrNull()?.data?.messageCallbackQueryOrNull()?.message?.messageId
     }
 
-    private fun Update.toData(chatId: Long, messageId: Long): Any {
-        callbackQueryUpdateOrNull()?.data?.dataCallbackQueryOrNull()?.data?.let { key ->
-            messageRepository.getAction(chatId, messageId, key)?.let { return it }
+    private suspend fun Update.toData(chatId: Long, messageId: Long, answer: suspend (DataCallbackQuery) -> Unit): Any {
+        callbackQueryUpdateOrNull()?.data?.dataCallbackQueryOrNull()?.let { query ->
+            messageRepository.getAction(chatId, messageId, query.data)?.let {
+                answer(query)
+                return it
+            }
         }
         return data
     }

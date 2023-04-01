@@ -1,6 +1,7 @@
 package com.ithersta.tgbotapi.entities
 
 import com.ithersta.tgbotapi.StatefulContext
+import com.ithersta.tgbotapi.StatefulContextImpl
 import com.ithersta.tgbotapi.basetypes.MessageState
 import com.ithersta.tgbotapi.basetypes.User
 import dev.inmo.tgbotapi.types.MessageId
@@ -25,7 +26,7 @@ public class MessageSpec<S : MessageState, U : User> internal constructor(
         private val mapper: (Any) -> Data?
     ) {
         suspend fun handle(
-            context: StatefulContext<S, StateAccessor.Static<S>, U, MessageId>,
+            context: StatefulContextImpl<S, StateAccessor.Static<S>, U, MessageId>,
             anyData: Any
         ) = mapper(anyData)?.let { data ->
             context.shouldStop = true
@@ -35,15 +36,15 @@ public class MessageSpec<S : MessageState, U : User> internal constructor(
     }
 
     @Suppress("UNCHECKED_CAST")
-    internal suspend fun handle(context: StatefulContext<*, StateAccessor.Static<*>, *, MessageId>, data: Any): Boolean =
+    internal suspend fun handle(context: StatefulContextImpl<*, StateAccessor.Static<*>, *, MessageId>, data: Any): Boolean =
         triggers
             .takeIf { context.isApplicable() }
             ?.any {
-                it.handle(context as StatefulContext<S, StateAccessor.Static<S>, U, MessageId>, data)
+                it.handle(context as StatefulContextImpl<S, StateAccessor.Static<S>, U, MessageId>, data)
             } ?: false
 
     @Suppress("UNCHECKED_CAST")
-    internal suspend fun handleOnNew(context: StatefulContext<*, StateAccessor.Changing<*>, *, Nothing?>): Boolean =
+    internal suspend fun handleOnNew(context: StatefulContextImpl<*, StateAccessor.Changing<*>, *, Nothing?>): Boolean =
         _onNewHandler
             ?.takeIf { context.isApplicable() }
             ?.let {
@@ -53,7 +54,7 @@ public class MessageSpec<S : MessageState, U : User> internal constructor(
             } ?: false
 
     @Suppress("UNCHECKED_CAST")
-    internal suspend fun handleOnEdit(context: StatefulContext<*, StateAccessor.Changing<*>, *, MessageId>): Boolean =
+    internal suspend fun handleOnEdit(context: StatefulContextImpl<*, StateAccessor.Changing<*>, *, MessageId>): Boolean =
         _onEditHandler
             ?.takeIf { context.isApplicable() }
             ?.let {
