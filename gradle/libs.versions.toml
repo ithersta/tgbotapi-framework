@@ -1,5 +1,5 @@
 [versions]
-kotlin = "1.8.10"
+kotlin = "1.8.20"
 inmo-tgbotapi = "7.0.1"
 koin = "3.3.3"
 kotlinx-serialization = "1.5.0"
