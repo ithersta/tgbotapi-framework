@@ -1,4 +1,4 @@
-package com.ithersta.tgbotapi.entities
+package com.ithersta.tgbotapi.core
 
 import com.ithersta.tgbotapi.StatefulContext
 import com.ithersta.tgbotapi.StatefulContextImpl

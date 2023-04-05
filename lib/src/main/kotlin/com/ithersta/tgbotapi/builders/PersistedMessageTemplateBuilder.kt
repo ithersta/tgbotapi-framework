@@ -5,8 +5,8 @@ import com.ithersta.tgbotapi.StatefulContext
 import com.ithersta.tgbotapi.basetypes.Action
 import com.ithersta.tgbotapi.basetypes.MessageState
 import com.ithersta.tgbotapi.basetypes.User
-import com.ithersta.tgbotapi.entities.MessageTemplate
-import com.ithersta.tgbotapi.entities.StateAccessor
+import com.ithersta.tgbotapi.core.MessageTemplate
+import com.ithersta.tgbotapi.core.StateAccessor
 import com.ithersta.tgbotapi.persistence.PersistedAction
 import dev.inmo.tgbotapi.extensions.utils.formatting.toMarkdownTexts
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.InlineKeyboardRowBuilder

@@ -1,4 +1,4 @@
-package com.ithersta.tgbotapi.entities
+package com.ithersta.tgbotapi.core
 
 import com.ithersta.tgbotapi.StatefulContextImpl
 import com.ithersta.tgbotapi.basetypes.MessageState
@@ -21,7 +21,7 @@ import dev.inmo.tgbotapi.utils.PreviewFeature
 public class Dispatcher(
     messageSpecs: List<MessageSpec<*, *>>,
     private val messageRepository: MessageRepository,
-    private val getUser: (UserId) -> User
+    private val getUser: GetUser
 ) {
     private val messageSpecs = messageSpecs.sortedByDescending { it.priority }
 
@@ -86,5 +86,7 @@ public class Dispatcher(
     }
 
     @OptIn(PreviewFeature::class)
-    private fun Update.toUserGetter() = sourceUser()?.id?.let { { getUser(it) } }
+    private fun Update.toUserGetter() = sourceUser()?.id
+        .let { it ?: toChat()?.id?.chatId?.let { chatId -> UserId(chatId) } }
+        ?.let { { getUser(it) } }
 }

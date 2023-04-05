@@ -2,7 +2,7 @@ package com.ithersta.tgbotapi
 
 import com.ithersta.tgbotapi.basetypes.MessageState
 import com.ithersta.tgbotapi.basetypes.User
-import com.ithersta.tgbotapi.entities.StateAccessor
+import com.ithersta.tgbotapi.core.StateAccessor
 import dev.inmo.tgbotapi.bot.TelegramBot
 import dev.inmo.tgbotapi.types.MessageId
 import dev.inmo.tgbotapi.types.chat.Chat

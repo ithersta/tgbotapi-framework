@@ -1,4 +1,4 @@
-package com.ithersta.tgbotapi.entities
+package com.ithersta.tgbotapi.core
 
 import com.ithersta.tgbotapi.persistence.PersistedAction
 import dev.inmo.tgbotapi.types.buttons.InlineKeyboardMarkup

@@ -3,17 +3,15 @@ package com.ithersta.tgbotapi.builders
 import com.ithersta.tgbotapi.FrameworkDslMarker
 import com.ithersta.tgbotapi.basetypes.MessageState
 import com.ithersta.tgbotapi.basetypes.User
-import com.ithersta.tgbotapi.entities.Handler
-import com.ithersta.tgbotapi.entities.MessageSpec
-import com.ithersta.tgbotapi.entities.StateChangeHandler
+import com.ithersta.tgbotapi.core.Handler
+import com.ithersta.tgbotapi.core.MessageSpec
+import com.ithersta.tgbotapi.core.StateChangeHandler
 import com.ithersta.tgbotapi.persistence.PersistedMessage
 import dev.inmo.tgbotapi.extensions.api.edit.edit
 import dev.inmo.tgbotapi.extensions.api.send.send
 import dev.inmo.tgbotapi.types.MessageId
+import dev.inmo.tgbotapi.types.message.abstracts.ChatEventMessage
 import dev.inmo.tgbotapi.types.message.abstracts.ContentMessage
-import io.ktor.util.reflect.*
-import kotlin.reflect.KClass
-import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.full.isSubtypeOf
 import kotlin.reflect.full.starProjectedType
 import kotlin.reflect.typeOf
@@ -64,13 +62,24 @@ public class MessageSpecBuilder<U : User, S : MessageState> @PublishedApi intern
             MessageSpec.Trigger(handler) { data ->
                 runCatching {
                     val type = typeOf<Data>()
-                    if (type.isSubtypeOf(ContentMessage::class.starProjectedType)) {
-                        val message = data as? ContentMessage<*> ?: return@runCatching null
-                        (message as? Data)?.takeIf {
-                            message.content::class.starProjectedType.isSubtypeOf(type.arguments.first().type!!)
+                    when {
+                        type.isSubtypeOf(ContentMessage::class.starProjectedType) -> {
+                            val message = data as? ContentMessage<*> ?: return@runCatching null
+                            (message as? Data)?.takeIf {
+                                message.content::class.starProjectedType.isSubtypeOf(type.arguments.first().type!!)
+                            }
                         }
-                    } else {
-                        data as? Data
+
+                        type.isSubtypeOf(ChatEventMessage::class.starProjectedType) -> {
+                            val message = data as? ChatEventMessage<*> ?: return@runCatching null
+                            (message as? Data)?.takeIf {
+                                message.chatEvent::class.starProjectedType.isSubtypeOf(type.arguments.first().type!!)
+                            }
+                        }
+
+                        else -> {
+                            data as? Data
+                        }
                     }
                 }.getOrNull()
             }

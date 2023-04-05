@@ -1,24 +1,24 @@
 package com.ithersta.sample
 
+import com.ithersta.tgbotapi.autoconfigure.autoconfigure
 import com.ithersta.tgbotapi.basetypes.Action
 import com.ithersta.tgbotapi.basetypes.MessageState
 import com.ithersta.tgbotapi.basetypes.User
 import com.ithersta.tgbotapi.builders.messageSpec
-import com.ithersta.tgbotapi.engines.regularEngine
-import com.ithersta.tgbotapi.entities.Dispatcher
-import com.ithersta.tgbotapi.sqlite.SqliteMessageRepository
-import dev.inmo.tgbotapi.extensions.api.telegramBot
-import dev.inmo.tgbotapi.extensions.behaviour_builder.buildBehaviourWithLongPolling
+import com.ithersta.tgbotapi.core.GetUser
+import com.ithersta.tgbotapi.core.runInBehaviourContext
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.flatInlineKeyboard
 import dev.inmo.tgbotapi.types.message.content.TextMessage
-import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.modules.SerializersModule
-import kotlinx.serialization.modules.polymorphic
-import kotlinx.serialization.modules.subclass
-import kotlinx.serialization.protobuf.ProtoBuf
+import org.koin.core.annotation.Single
+import kotlin.time.Duration.Companion.days
 
-class DefaultUser : User
+data class DefaultUser(val id: Long) : User
+
+@Single
+fun getUser() = GetUser { DefaultUser(it.chatId) }
 
 @Serializable
 data class CounterState(
@@ -31,6 +31,7 @@ data class CounterState(
     object Minus : Action
 }
 
+@Single
 fun counter() = messageSpec<DefaultUser, CounterState> {
     render {
         text = state.snapshot.number.toString()
@@ -47,6 +48,7 @@ fun counter() = messageSpec<DefaultUser, CounterState> {
     }
 }
 
+@Single
 fun commandHandler() = messageSpec<User, MessageState> {
     on<TextMessage> { message ->
         when (message.content.text) {
@@ -56,25 +58,13 @@ fun commandHandler() = messageSpec<User, MessageState> {
     }
 }
 
-val s = SerializersModule {
-    polymorphic(MessageState::class) {
-        subclass(MessageState.Empty::class)
-        subclass(CounterState::class)
-    }
-    polymorphic(Action::class) {
-        subclass(CounterState.Plus::class)
-        subclass(CounterState.Minus::class)
+@Single
+fun doSomethingDaily() = runInBehaviourContext {
+    launch {
+        while (true) {
+            delay(1.days)
+        }
     }
 }
 
-@OptIn(ExperimentalSerializationApi::class)
-suspend fun main() {
-    val dispatcher = Dispatcher(
-        listOf(commandHandler(), counter()),
-        SqliteMessageRepository(ProtoBuf { serializersModule = s }),
-        getUser = { DefaultUser() })
-    val engine = dispatcher.regularEngine()
-    telegramBot(token = System.getenv("TOKEN")).buildBehaviourWithLongPolling {
-        engine.block.invoke(this)
-    }.join()
-}
+suspend fun main() = autoconfigure()

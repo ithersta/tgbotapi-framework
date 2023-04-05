@@ -1,8 +1,8 @@
 package com.ithersta.tgbotapi.engines
 
-import com.ithersta.tgbotapi.entities.BehaviourContextRunner
-import com.ithersta.tgbotapi.entities.Dispatcher
-import com.ithersta.tgbotapi.entities.runInBehaviourContext
+import com.ithersta.tgbotapi.core.BehaviourContextRunner
+import com.ithersta.tgbotapi.core.Dispatcher
+import com.ithersta.tgbotapi.core.runInBehaviourContext
 import dev.inmo.micro_utils.coroutines.subscribeSafelyWithoutExceptionsAsync
 import dev.inmo.tgbotapi.bot.TelegramBot
 import dev.inmo.tgbotapi.extensions.utils.extensions.sourceChat

@@ -1,4 +1,4 @@
-package com.ithersta.tgbotapi.entities
+package com.ithersta.tgbotapi.core
 
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
 
