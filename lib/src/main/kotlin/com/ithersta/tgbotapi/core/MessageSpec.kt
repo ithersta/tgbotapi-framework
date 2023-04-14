@@ -9,7 +9,7 @@ import dev.inmo.tgbotapi.types.MessageId
 public typealias Handler<S, U, M, Data> = suspend StatefulContext<S, StateAccessor.Static<S>, U, M>.(Data) -> Unit
 public typealias StateChangeHandler<S, U, M, Data> = suspend StatefulContext<S, StateAccessor.Changing<S>, U, M>.(Data) -> Unit
 
-public class MessageSpec<S : MessageState, U : User> internal constructor(
+public class MessageSpec<U : User, S : MessageState> internal constructor(
     internal val priority: Int,
     private val stateMapper: (MessageState) -> S?,
     private val userMapper: (User) -> U?,

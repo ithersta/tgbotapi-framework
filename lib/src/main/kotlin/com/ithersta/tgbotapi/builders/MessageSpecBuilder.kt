@@ -87,7 +87,7 @@ public class MessageSpecBuilder<U : User, S : MessageState> @PublishedApi intern
     }
 
     @PublishedApi
-    internal fun build(): MessageSpec<S, U> = MessageSpec(
+    internal fun build(): MessageSpec<U, S> = MessageSpec(
         priority = priority,
         stateMapper = stateMapper,
         userMapper = userMapper,
@@ -100,7 +100,7 @@ public class MessageSpecBuilder<U : User, S : MessageState> @PublishedApi intern
 public inline fun <reified U : User, reified S : MessageState> messageSpec(
     priority: Int = 0,
     block: MessageSpecBuilder<U, S>.() -> Unit
-): MessageSpec<S, U> = MessageSpecBuilder(
+): MessageSpec<U, S> = MessageSpecBuilder(
     priority,
     stateMapper = { it as? S },
     userMapper = { it as? U }
