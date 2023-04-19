@@ -8,7 +8,7 @@ exposed = "0.41.1"
 xerial-sqlite = "3.41.2.1"
 ksp = "1.8.20-1.0.10"
 kotlinpoet = "1.13.0"
-ktor = "2.2.4"
+ktor = "2.3.0"
 
 [libraries]
 inmo-tgbotapi = { module = "dev.inmo:tgbotapi", version.ref = "inmo-tgbotapi" }
