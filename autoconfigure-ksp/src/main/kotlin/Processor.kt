@@ -92,15 +92,9 @@ class Processor(
             .addFunction(
                 FunSpec
                     .builder("autoconfigure")
+                    .receiver(ClassName("org.koin.core", "KoinApplication"))
                     .addModifiers(KModifier.SUSPEND)
-                    .addCode("return autoconfigure(generatedSerializersModule(), defaultModule)")
-                    .build()
-            )
-            .addFunction(
-                FunSpec
-                    .builder("main")
-                    .addModifiers(KModifier.SUSPEND)
-                    .addCode("return autoconfigure()")
+                    .addCode("return autoconfigure(generatedSerializersModule())")
                     .build()
             )
             .build()

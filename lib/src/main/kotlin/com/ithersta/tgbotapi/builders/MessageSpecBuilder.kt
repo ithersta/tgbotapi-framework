@@ -7,6 +7,7 @@ import com.ithersta.tgbotapi.core.Handler
 import com.ithersta.tgbotapi.core.MessageSpec
 import com.ithersta.tgbotapi.core.StateChangeHandler
 import com.ithersta.tgbotapi.persistence.PersistedMessage
+import dev.inmo.tgbotapi.bot.exceptions.MessageIsNotModifiedException
 import dev.inmo.tgbotapi.extensions.api.edit.edit
 import dev.inmo.tgbotapi.extensions.api.send.send
 import dev.inmo.tgbotapi.types.MessageId
@@ -42,9 +43,18 @@ public class MessageSpecBuilder<U : User, S : MessageState> @PublishedApi intern
                     entities = template.entities,
                     replyMarkup = template.keyboard
                 )
+            }.onFailure { exception ->
+                if (exception !is MessageIsNotModifiedException) {
+                    throw exception
+                }
             }
             state.persist(PersistedMessage(chat.id.chatId, messageId, state.snapshot, template.actions))
         }
+    }
+
+    public fun onNewOrEdit(handler: StateChangeHandler<S, U, *, Nothing?>) {
+        onNew(handler)
+        onEdit(handler)
     }
 
     public fun onNew(handler: StateChangeHandler<S, U, Nothing?, Nothing?>) {
@@ -63,6 +73,14 @@ public class MessageSpecBuilder<U : User, S : MessageState> @PublishedApi intern
                 runCatching {
                     val type = typeOf<Data>()
                     when {
+                        type.isSubtypeOf(Pair::class.starProjectedType) -> {
+                            val pair = data as? Pair<*, *> ?: return@runCatching null
+                            (pair as? Data)?.takeIf {
+                                pair.first!!::class.starProjectedType.isSubtypeOf(type.arguments[0].type!!) &&
+                                        pair.second!!::class.starProjectedType.isSubtypeOf(type.arguments[1].type!!)
+                            }
+                        }
+
                         type.isSubtypeOf(ContentMessage::class.starProjectedType) -> {
                             val message = data as? ContentMessage<*> ?: return@runCatching null
                             (message as? Data)?.takeIf {
@@ -97,7 +115,7 @@ public class MessageSpecBuilder<U : User, S : MessageState> @PublishedApi intern
     )
 }
 
-public inline fun <reified U : User, reified S : MessageState> messageSpec(
+public inline fun <reified U : User, reified S : MessageState> inState(
     priority: Int = 0,
     block: MessageSpecBuilder<U, S>.() -> Unit
 ): MessageSpec<U, S> = MessageSpecBuilder(

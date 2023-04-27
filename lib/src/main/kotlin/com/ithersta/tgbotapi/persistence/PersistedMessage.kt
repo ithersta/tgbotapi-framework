@@ -6,5 +6,5 @@ public class PersistedMessage(
     public val chatId: Long,
     public val messageId: Long,
     public val state: MessageState,
-    public val actions: List<PersistedAction>
+    public val actions: List<PersistedAction> = emptyList()
 )

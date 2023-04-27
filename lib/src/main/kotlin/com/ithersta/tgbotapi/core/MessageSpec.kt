@@ -4,8 +4,10 @@ import com.ithersta.tgbotapi.StatefulContext
 import com.ithersta.tgbotapi.StatefulContextImpl
 import com.ithersta.tgbotapi.basetypes.MessageState
 import com.ithersta.tgbotapi.basetypes.User
+import dev.inmo.tgbotapi.bot.TelegramBot
 import dev.inmo.tgbotapi.types.MessageId
 
+public typealias OnSuccess = suspend TelegramBot.() -> Unit
 public typealias Handler<S, U, M, Data> = suspend StatefulContext<S, StateAccessor.Static<S>, U, M>.(Data) -> Unit
 public typealias StateChangeHandler<S, U, M, Data> = suspend StatefulContext<S, StateAccessor.Changing<S>, U, M>.(Data) -> Unit
 
@@ -27,20 +29,29 @@ public class MessageSpec<U : User, S : MessageState> internal constructor(
     ) {
         suspend fun handle(
             context: StatefulContextImpl<S, StateAccessor.Static<S>, U, MessageId>,
+            onSuccess: OnSuccess?,
             anyData: Any
         ) = mapper(anyData)?.let { data ->
             context.shouldStop = true
             handler(context, data)
-            context.shouldStop
+            context.shouldStop.also { shouldStop ->
+                if (shouldStop) {
+                    onSuccess?.invoke(context)
+                }
+            }
         } ?: false
     }
 
     @Suppress("UNCHECKED_CAST")
-    internal suspend fun handle(context: StatefulContextImpl<*, StateAccessor.Static<*>, *, MessageId>, data: Any): Boolean =
+    internal suspend fun handle(
+        context: StatefulContextImpl<*, StateAccessor.Static<*>, *, MessageId>,
+        onSuccess: OnSuccess?,
+        data: Any
+    ): Boolean =
         triggers
             .takeIf { context.isApplicable() }
             ?.any {
-                it.handle(context as StatefulContextImpl<S, StateAccessor.Static<S>, U, MessageId>, data)
+                it.handle(context as StatefulContextImpl<S, StateAccessor.Static<S>, U, MessageId>, onSuccess, data)
             } ?: false
 
     @Suppress("UNCHECKED_CAST")

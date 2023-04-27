@@ -16,20 +16,20 @@ import io.ktor.client.engine.okhttp.*
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.protobuf.ProtoBuf
-import org.koin.core.context.startKoin
-import org.koin.core.module.Module
+import org.koin.core.KoinApplication
 import java.io.File
 
-suspend fun autoconfigure(serializersModule: SerializersModule, module: Module) {
-    val koin = startKoin { modules(module) }.koin
+suspend fun KoinApplication.autoconfigure(serializersModule: SerializersModule) {
     val messageRepository = koin.getOrNull<MessageRepository>() ?: defaultMessageRepository(serializersModule)
     val getUser = koin.get<GetUser>()
     val messageSpecs = koin.getAll<MessageSpec<*, *>>()
     val telegramBot = koin.getOrNull<TelegramBot>() ?: defaultTelegramBot()
     val behaviourContextRunners = koin.getAll<BehaviourContextRunner>()
+    val updateTransformers = koin.getOrNull<Dispatcher.UpdateTransformers>() ?: DefaultUpdateTransformers
     val dispatcher = Dispatcher(
         messageSpecs = messageSpecs,
         messageRepository = messageRepository,
+        updateTransformers = updateTransformers,
         getUser = getUser
     )
     telegramBot.buildBehaviourWithLongPolling {
