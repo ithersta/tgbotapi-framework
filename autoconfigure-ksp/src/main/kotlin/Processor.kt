@@ -88,7 +88,6 @@ class Processor(
             .writeTo(codeGenerator = codeGenerator, dependencies = dependencies)
         FileSpec
             .scriptBuilder(packageName = packageName, fileName = "Main")
-            .addImport("org.koin.ksp.generated", "defaultModule")
             .addFunction(
                 FunSpec
                     .builder("autoconfigure")
