@@ -5,17 +5,19 @@ import com.ithersta.tgbotapi.StatefulContextImpl
 import com.ithersta.tgbotapi.basetypes.MessageState
 import com.ithersta.tgbotapi.basetypes.User
 import dev.inmo.tgbotapi.bot.TelegramBot
+import dev.inmo.tgbotapi.types.BotCommand
 import dev.inmo.tgbotapi.types.MessageId
 
 public typealias OnSuccess = suspend TelegramBot.() -> Unit
 public typealias Handler<S, U, M, Data> = suspend StatefulContext<S, StateAccessor.Static<S>, U, M>.(Data) -> Unit
 public typealias StateChangeHandler<S, U, M, Data> = suspend StatefulContext<S, StateAccessor.Changing<S>, U, M>.(Data) -> Unit
 
-public class MessageSpec<U : User, S : MessageState> internal constructor(
+public class StateSpec<U : User, S : MessageState> internal constructor(
     internal val priority: Int,
     private val stateMapper: (MessageState) -> S?,
     private val userMapper: (User) -> U?,
     private val triggers: List<Trigger<S, U, *>>,
+    private val commands: List<BotCommand>,
     private val _onNewHandler: StateChangeHandler<S, U, Nothing?, Nothing?>?,
     private val _onEditHandler: StateChangeHandler<S, U, MessageId, Nothing?>?
 ) {
@@ -73,4 +75,6 @@ public class MessageSpec<U : User, S : MessageState> internal constructor(
                 it.invoke(context as StatefulContext<S, StateAccessor.Changing<S>, U, MessageId>, null)
                 context.shouldStop
             } ?: false
+
+    internal fun commands(user: User): List<BotCommand> = userMapper(user)?.let { commands } ?: emptyList()
 }

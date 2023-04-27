@@ -15,6 +15,7 @@ public interface StatefulContext<S : MessageState, SA : StateAccessor<S>, U : Us
     public val user: U
     public val update: Update?
     public fun fallthrough()
+    public suspend fun updateCommands()
 }
 
 public class StatefulContextImpl<S : MessageState, SA : StateAccessor<S>, U : User, M : MessageId?>(
@@ -23,10 +24,15 @@ public class StatefulContextImpl<S : MessageState, SA : StateAccessor<S>, U : Us
     public override val chat: Chat,
     public override val messageId: M,
     public override val user: U,
-    public override val update: Update?
+    public override val update: Update?,
+    private val _updateCommands: suspend () -> Unit
 ) : StatefulContext<S, SA, U, M>, TelegramBot by telegramBot {
     internal var shouldStop = false
     public override fun fallthrough() {
         shouldStop = false
+    }
+
+    override suspend fun updateCommands() {
+        _updateCommands()
     }
 }

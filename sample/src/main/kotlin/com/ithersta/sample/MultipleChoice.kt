@@ -4,9 +4,9 @@ import com.ithersta.sample.MultipleChoiceState.SelectAction
 import com.ithersta.sample.MultipleChoiceState.UnselectAction
 import com.ithersta.tgbotapi.basetypes.Action
 import com.ithersta.tgbotapi.basetypes.MessageState
+import com.ithersta.tgbotapi.builders.command
 import com.ithersta.tgbotapi.builders.inState
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.inlineKeyboard
-import dev.inmo.tgbotapi.types.message.content.TextMessage
 import dev.inmo.tgbotapi.utils.row
 import kotlinx.serialization.Serializable
 import org.koin.core.annotation.Named
@@ -50,11 +50,7 @@ fun multipleChoice() = inState<DefaultUser, MultipleChoiceState> {
 
 @Single
 @Named("commands")
-fun commands() = inState<DefaultUser, MessageState>(priority = 10) {
-    on<TextMessage> {
-        when (it.content.text) {
-            "/start" -> state.new { MultipleChoiceState() }
-            else -> fallthrough()
-        }
-    }
+fun startCommand() = command<DefaultUser>("start", description = "начать") {
+    state.new { MultipleChoiceState() }
+    updateCommands()
 }

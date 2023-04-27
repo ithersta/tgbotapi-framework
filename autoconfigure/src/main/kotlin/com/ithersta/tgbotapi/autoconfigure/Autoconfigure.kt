@@ -3,7 +3,7 @@ package com.ithersta.tgbotapi.autoconfigure
 import com.ithersta.tgbotapi.core.BehaviourContextRunner
 import com.ithersta.tgbotapi.core.Dispatcher
 import com.ithersta.tgbotapi.core.GetUser
-import com.ithersta.tgbotapi.core.MessageSpec
+import com.ithersta.tgbotapi.core.StateSpec
 import com.ithersta.tgbotapi.engines.regularEngine
 import com.ithersta.tgbotapi.persistence.MessageRepository
 import com.ithersta.tgbotapi.sqlite.SqliteMessageRepository
@@ -22,12 +22,12 @@ import java.io.File
 suspend fun KoinApplication.autoconfigure(serializersModule: SerializersModule) {
     val messageRepository = koin.getOrNull<MessageRepository>() ?: defaultMessageRepository(serializersModule)
     val getUser = koin.get<GetUser>()
-    val messageSpecs = koin.getAll<MessageSpec<*, *>>()
+    val stateSpecs = koin.getAll<StateSpec<*, *>>()
     val telegramBot = koin.getOrNull<TelegramBot>() ?: defaultTelegramBot()
     val behaviourContextRunners = koin.getAll<BehaviourContextRunner>()
     val updateTransformers = koin.getOrNull<Dispatcher.UpdateTransformers>() ?: DefaultUpdateTransformers
     val dispatcher = Dispatcher(
-        messageSpecs = messageSpecs,
+        stateSpecs = stateSpecs,
         messageRepository = messageRepository,
         updateTransformers = updateTransformers,
         getUser = getUser
