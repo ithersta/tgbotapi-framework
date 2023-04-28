@@ -1,9 +1,11 @@
 package com.ithersta.tgbotapi.builders
 
 import com.ithersta.tgbotapi.FrameworkDslMarker
+import com.ithersta.tgbotapi.StatefulContext
 import com.ithersta.tgbotapi.basetypes.MessageState
 import com.ithersta.tgbotapi.basetypes.Role
 import com.ithersta.tgbotapi.core.Handler
+import com.ithersta.tgbotapi.core.StateAccessor
 import com.ithersta.tgbotapi.core.StateChangeHandler
 import com.ithersta.tgbotapi.core.StateSpec
 import com.ithersta.tgbotapi.persistence.PersistedMessage
@@ -14,16 +16,21 @@ import dev.inmo.tgbotapi.types.BotCommand
 import dev.inmo.tgbotapi.types.MessageId
 import dev.inmo.tgbotapi.types.message.abstracts.ChatEventMessage
 import dev.inmo.tgbotapi.types.message.abstracts.ContentMessage
+import dev.inmo.tgbotapi.types.message.abstracts.Message
 import dev.inmo.tgbotapi.types.message.content.TextMessage
 import kotlin.reflect.full.isSubtypeOf
 import kotlin.reflect.full.starProjectedType
 import kotlin.reflect.typeOf
 
+public typealias StateChangeHandlerReturningMessage<S, U, M, Data> =
+        suspend StatefulContext<S, StateAccessor.Changing<S>, U, M>.(Data) -> Message
+
 @FrameworkDslMarker
 public class StateSpecBuilder<R : Role, S : MessageState> @PublishedApi internal constructor(
     private val priority: Int = 0,
     private val stateMapper: (MessageState) -> S?,
-    private val roleMapper: (Role) -> R?
+    private val roleMapper: (Role) -> R?,
+    private val handleGlobalUpdates: Boolean
 ) {
     @PublishedApi
     internal val triggers: MutableList<StateSpec.Trigger<S, R, *>> = mutableListOf()
@@ -34,12 +41,20 @@ public class StateSpecBuilder<R : Role, S : MessageState> @PublishedApi internal
     private var onEditHandler: StateChangeHandler<S, R, MessageId, Nothing?>? = null
 
     public fun render(block: PersistedMessageTemplateBuilder<S, R, *>.() -> Unit) {
-        onNew {
+        _onNew {
             val template = PersistedMessageTemplateBuilder(this).apply(block).build()
             val message = send(chat, template.entities, replyMarkup = template.keyboard)
-            state.persist(PersistedMessage(chat.id.chatId, message.messageId, state.snapshot, template.actions))
+            state.persist(
+                PersistedMessage(
+                    chatId = chat.id.chatId,
+                    messageId = message.messageId,
+                    state = state.snapshot,
+                    handleGlobalUpdates = handleGlobalUpdates,
+                    actions = template.actions
+                )
+            )
         }
-        onEdit {
+        _onEdit {
             val template = PersistedMessageTemplateBuilder(this).apply(block).build()
             runCatching {
                 edit(
@@ -53,23 +68,45 @@ public class StateSpecBuilder<R : Role, S : MessageState> @PublishedApi internal
                     throw exception
                 }
             }
-            state.persist(PersistedMessage(chat.id.chatId, messageId, state.snapshot, template.actions))
+            state.persist(
+                PersistedMessage(
+                    chatId = chat.id.chatId,
+                    messageId = messageId,
+                    state = state.snapshot,
+                    handleGlobalUpdates = handleGlobalUpdates,
+                    actions = template.actions
+                )
+            )
         }
     }
 
-    public fun onNewOrEdit(handler: StateChangeHandler<S, R, *, Nothing?>) {
-        onNew(handler)
-        onEdit(handler)
-    }
-
-    public fun onNew(handler: StateChangeHandler<S, R, Nothing?, Nothing?>) {
+    private fun _onNew(handler: StateChangeHandler<S, R, Nothing?, Nothing?>) {
         check(onNewHandler == null) { "Only one onNew block allowed" }
         onNewHandler = handler
     }
 
-    public fun onEdit(handler: StateChangeHandler<S, R, MessageId, Nothing?>) {
+    private fun _onEdit(handler: StateChangeHandler<S, R, MessageId, Nothing?>) {
         check(onEditHandler == null) { "Only one onEdit block allowed" }
         onEditHandler = handler
+    }
+
+    public fun onNewOrEdit(handler: StateChangeHandlerReturningMessage<S, R, *, Nothing?>) {
+        onNew(handler)
+        onEdit(handler)
+    }
+
+    public fun onNew(handler: StateChangeHandlerReturningMessage<S, R, Nothing?, Nothing?>) {
+        _onNew {
+            val message = handler(null)
+            state.persist(PersistedMessage(chat.id.chatId, message.messageId, state.snapshot, handleGlobalUpdates))
+        }
+    }
+
+    public fun onEdit(handler: StateChangeHandlerReturningMessage<S, R, MessageId, Nothing?>) {
+        _onEdit {
+            val message = handler(null)
+            state.persist(PersistedMessage(chat.id.chatId, message.messageId, state.snapshot, handleGlobalUpdates))
+        }
     }
 
     public inline fun <reified Data : Any> on(noinline handler: Handler<S, R, MessageId, Data>) {
@@ -123,11 +160,13 @@ public class StateSpecBuilder<R : Role, S : MessageState> @PublishedApi internal
 
 public inline fun <reified R : Role, reified S : MessageState> inState(
     priority: Int = 0,
+    handleGlobalUpdates: Boolean = true,
     block: StateSpecBuilder<R, S>.() -> Unit
 ): StateSpec<R, S> = StateSpecBuilder(
     priority,
     stateMapper = { it as? S },
-    roleMapper = { it as? R }
+    roleMapper = { it as? R },
+    handleGlobalUpdates
 ).apply(block).build()
 
 public inline fun <reified R : Role> command(

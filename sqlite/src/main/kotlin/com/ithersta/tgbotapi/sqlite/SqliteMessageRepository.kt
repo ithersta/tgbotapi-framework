@@ -35,6 +35,7 @@ public class SqliteMessageRepository(
                 it[chatId] = message.chatId
                 it[messageId] = message.messageId
                 it[state] = serializedState
+                it[handleGlobalUpdates] = message.handleGlobalUpdates
             }
             PersistedActions.batchInsert(serializedActions) { (key, action) ->
                 this[PersistedActions.chatId] = message.chatId
@@ -57,7 +58,7 @@ public class SqliteMessageRepository(
     override fun getLast(chatId: Long): Pair<MessageState, MessageId>? = transaction(db) {
         PersistedMessages
             .slice(PersistedMessages.state, PersistedMessages.messageId)
-            .select { (PersistedMessages.chatId eq chatId) }
+            .select { (PersistedMessages.chatId eq chatId) and PersistedMessages.handleGlobalUpdates }
             .orderBy(PersistedMessages.messageId, SortOrder.DESC)
             .limit(1)
             .firstOrNull()
