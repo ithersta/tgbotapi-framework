@@ -2,7 +2,7 @@ package com.ithersta.tgbotapi.core
 
 import com.ithersta.tgbotapi.StatefulContextImpl
 import com.ithersta.tgbotapi.basetypes.MessageState
-import com.ithersta.tgbotapi.basetypes.User
+import com.ithersta.tgbotapi.basetypes.Role
 import com.ithersta.tgbotapi.persistence.MessageRepository
 import dev.inmo.tgbotapi.bot.TelegramBot
 import dev.inmo.tgbotapi.extensions.api.bot.setMyCommands
@@ -18,13 +18,13 @@ public class Dispatcher(
     stateSpecs: List<StateSpec<*, *>>,
     private val messageRepository: MessageRepository,
     private val updateTransformers: UpdateTransformers,
-    private val getUser: GetUser
+    private val getRole: GetRole
 ) {
     private val stateSpecs = stateSpecs.sortedByDescending { it.priority }
 
     public suspend fun BehaviourContext.handle(update: Update): Unit = with(updateTransformers) {
         val chat = update.toChat() ?: return
-        val getUser = update.toUserId()?.let { { getUser(it) } } ?: return
+        val getRole = update.toUserId()?.let { { getRole(it) } } ?: return
         val chatId = chat.id.chatId
         val (state, messageId) = update.toMessageId()
             ?.let { messageId -> (messageRepository.get(chatId, messageId) ?: MessageState.Empty) to messageId }
@@ -35,23 +35,23 @@ public class Dispatcher(
         val action = actionKey?.let { messageRepository.getAction(chatId, messageId, it) }
         val stateAccessor = StateAccessor.Static(
             snapshot = state,
-            _edit = { handleStateChange(chat, getUser, messageId, update, it, ::handleOnEdit) },
-            _new = { handleStateChange(chat, getUser, null, update, it, ::handleOnNew) }
+            _edit = { handleStateChange(chat, getRole, messageId, update, it, ::handleOnEdit) },
+            _new = { handleStateChange(chat, getRole, null, update, it, ::handleOnNew) }
         )
-        val context = StatefulContextImpl(bot, stateAccessor, chat, messageId, getUser(), update) {
-            updateCommands(chat.id, getUser)
+        val context = StatefulContextImpl(bot, stateAccessor, chat, messageId, getRole(), update) {
+            updateCommands(chat.id, getRole)
         }
         handle(context, update.onSuccess(), listOfNotNull(data, action, action?.to(data)))
     }
 
-    private suspend fun BehaviourContext.updateCommands(chatId: ChatIdentifier, getUser: () -> User) {
+    private suspend fun BehaviourContext.updateCommands(chatId: ChatIdentifier, getRole: () -> Role) {
         val scope = BotCommandScope.Chat(chatId)
-        setMyCommands(stateSpecs.flatMap { it.commands(getUser()) }, scope)
+        setMyCommands(stateSpecs.flatMap { it.commands(getRole()) }, scope)
     }
 
     private suspend fun <M : MessageId?> BehaviourContext.handleStateChange(
         chat: Chat,
-        getUser: () -> User,
+        getRole: () -> Role,
         messageId: M,
         update: Update,
         state: MessageState,
@@ -59,11 +59,11 @@ public class Dispatcher(
     ) {
         val stateAccessor = StateAccessor.Changing(
             snapshot = state,
-            _new = { handleStateChange(chat, getUser, null, update, it, ::handleOnNew) },
+            _new = { handleStateChange(chat, getRole, null, update, it, ::handleOnNew) },
             _persist = { messageRepository.save(it) }
         )
-        val context = StatefulContextImpl(bot, stateAccessor, chat, messageId, getUser(), update) {
-            updateCommands(chat.id, getUser)
+        val context = StatefulContextImpl(bot, stateAccessor, chat, messageId, getRole(), update) {
+            updateCommands(chat.id, getRole)
         }
         handle(context)
     }
