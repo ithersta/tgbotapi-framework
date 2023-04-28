@@ -48,13 +48,19 @@ public class StateSpec<U : User, S : MessageState> internal constructor(
     internal suspend fun handle(
         context: StatefulContextImpl<*, StateAccessor.Static<*>, *, MessageId>,
         onSuccess: OnSuccess?,
-        data: Any
-    ): Boolean =
-        triggers
-            .takeIf { context.isApplicable() }
-            ?.any {
-                it.handle(context as StatefulContextImpl<S, StateAccessor.Static<S>, U, MessageId>, onSuccess, data)
-            } ?: false
+        data: List<Any>
+    ): Boolean {
+        if (context.isApplicable().not()) return false
+        return triggers.asSequence()
+            .flatMap { trigger -> data.map { trigger to it } }
+            .any { (trigger, data) ->
+                trigger.handle(
+                    context = context as StatefulContextImpl<S, StateAccessor.Static<S>, U, MessageId>,
+                    onSuccess = onSuccess,
+                    anyData = data
+                )
+            }
+    }
 
     @Suppress("UNCHECKED_CAST")
     internal suspend fun handleOnNew(context: StatefulContextImpl<*, StateAccessor.Changing<*>, *, Nothing?>): Boolean =
