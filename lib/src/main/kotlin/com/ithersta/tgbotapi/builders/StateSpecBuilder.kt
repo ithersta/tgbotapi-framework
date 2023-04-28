@@ -158,6 +158,16 @@ public class StateSpecBuilder<R : Role, S : MessageState> @PublishedApi internal
     )
 }
 
+/**
+ * Constructs [StateSpec].
+ *
+ * @param R the type of user role this spec applies for.
+ * @param S the type of message state this spec applies for.
+ * @param priority the priority of this spec, a spec with
+ * a bigger priority is called first.
+ * @param handleGlobalUpdates if set to true, this spec
+ * will handle updates that are not bound to the message (like `on<TextMessage>`)
+ */
 public inline fun <reified R : Role, reified S : MessageState> inState(
     priority: Int = 0,
     handleGlobalUpdates: Boolean = true,
@@ -169,6 +179,16 @@ public inline fun <reified R : Role, reified S : MessageState> inState(
     handleGlobalUpdates
 ).apply(block).build()
 
+/**
+ * Constructs [StateSpec] handling a command.
+ * Also adds the command to the command list.
+ *
+ * @param R the type of user role this command applies for.
+ * @param text trigger text for the command, without `\`.
+ * @param description description text for the command, will be visible in the command list.
+ * @param priority the priority of this spec, a spec with
+ * a bigger priority is called first.
+ */
 public inline fun <reified R : Role> command(
     text: String,
     description: String?,

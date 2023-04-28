@@ -12,6 +12,12 @@ public typealias OnSuccess = suspend TelegramBot.() -> Unit
 public typealias Handler<S, U, M, Data> = suspend StatefulContext<S, StateAccessor.Static<S>, U, M>.(Data) -> Unit
 public typealias StateChangeHandler<S, U, M, Data> = suspend StatefulContext<S, StateAccessor.Changing<S>, U, M>.(Data) -> Unit
 
+/**
+ * Describes a state with handlers on different triggers.
+ *
+ * @param R the type of user role this spec applies for.
+ * @param S the type of message state this spec applies for.
+ */
 public class StateSpec<R : Role, S : MessageState> internal constructor(
     internal val priority: Int,
     private val stateMapper: (MessageState) -> S?,
