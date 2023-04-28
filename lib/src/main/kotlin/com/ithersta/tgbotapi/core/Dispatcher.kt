@@ -72,9 +72,7 @@ public class Dispatcher(
         context: StatefulContextImpl<*, StateAccessor.Static<*>, *, MessageId>,
         onSuccess: OnSuccess?,
         data: List<Any>
-    ) = stateSpecs
-        .flatMap { messageSpec -> data.map { it to messageSpec } }
-        .any { (data, messageSpec) -> messageSpec.handle(context, onSuccess, data) }
+    ) = stateSpecs.any { it.handle(context, onSuccess, data) }
 
     private suspend fun handleOnEdit(context: StatefulContextImpl<*, StateAccessor.Changing<*>, *, MessageId>) =
         stateSpecs.any { it.handleOnEdit(context) }
