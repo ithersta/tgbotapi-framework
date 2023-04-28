@@ -2,7 +2,7 @@ package com.ithersta.tgbotapi.autoconfigure
 
 import com.ithersta.tgbotapi.core.BehaviourContextRunner
 import com.ithersta.tgbotapi.core.Dispatcher
-import com.ithersta.tgbotapi.core.GetUser
+import com.ithersta.tgbotapi.core.GetRole
 import com.ithersta.tgbotapi.core.StateSpec
 import com.ithersta.tgbotapi.engines.regularEngine
 import com.ithersta.tgbotapi.persistence.MessageRepository
@@ -21,7 +21,7 @@ import java.io.File
 
 suspend fun KoinApplication.autoconfigure(serializersModule: SerializersModule) {
     val messageRepository = koin.getOrNull<MessageRepository>() ?: defaultMessageRepository(serializersModule)
-    val getUser = koin.get<GetUser>()
+    val getRole = koin.get<GetRole>()
     val stateSpecs = koin.getAll<StateSpec<*, *>>()
     val telegramBot = koin.getOrNull<TelegramBot>() ?: defaultTelegramBot()
     val behaviourContextRunners = koin.getAll<BehaviourContextRunner>()
@@ -30,7 +30,7 @@ suspend fun KoinApplication.autoconfigure(serializersModule: SerializersModule) 
         stateSpecs = stateSpecs,
         messageRepository = messageRepository,
         updateTransformers = updateTransformers,
-        getUser = getUser
+        getRole = getRole
     )
     telegramBot.buildBehaviourWithLongPolling {
         behaviourContextRunners.forEach { it.block(this) }

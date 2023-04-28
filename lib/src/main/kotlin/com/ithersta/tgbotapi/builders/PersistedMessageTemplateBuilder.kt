@@ -4,7 +4,7 @@ import com.ithersta.tgbotapi.FrameworkDslMarker
 import com.ithersta.tgbotapi.StatefulContext
 import com.ithersta.tgbotapi.basetypes.Action
 import com.ithersta.tgbotapi.basetypes.MessageState
-import com.ithersta.tgbotapi.basetypes.User
+import com.ithersta.tgbotapi.basetypes.Role
 import com.ithersta.tgbotapi.core.MessageTemplate
 import com.ithersta.tgbotapi.core.StateAccessor
 import com.ithersta.tgbotapi.persistence.PersistedAction
@@ -18,9 +18,9 @@ import dev.inmo.tgbotapi.utils.buildEntities
 import dev.inmo.tgbotapi.utils.regular
 
 @FrameworkDslMarker
-public class PersistedMessageTemplateBuilder<S : MessageState, U : User, M : MessageId?>(
-    context: StatefulContext<S, StateAccessor.Changing<S>, U, M>
-) : StatefulContext<S, StateAccessor.Changing<S>, U, M> by context {
+public class PersistedMessageTemplateBuilder<S : MessageState, R : Role, M : MessageId?>(
+    context: StatefulContext<S, StateAccessor.Changing<S>, R, M>
+) : StatefulContext<S, StateAccessor.Changing<S>, R, M> by context {
     public var entities: List<TextSource> = emptyList()
     public var text: String
         get() = entities.toMarkdownTexts().joinToString("")

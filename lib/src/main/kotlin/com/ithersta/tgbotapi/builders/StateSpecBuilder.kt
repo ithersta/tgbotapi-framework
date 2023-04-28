@@ -2,7 +2,7 @@ package com.ithersta.tgbotapi.builders
 
 import com.ithersta.tgbotapi.FrameworkDslMarker
 import com.ithersta.tgbotapi.basetypes.MessageState
-import com.ithersta.tgbotapi.basetypes.User
+import com.ithersta.tgbotapi.basetypes.Role
 import com.ithersta.tgbotapi.core.Handler
 import com.ithersta.tgbotapi.core.StateChangeHandler
 import com.ithersta.tgbotapi.core.StateSpec
@@ -20,20 +20,20 @@ import kotlin.reflect.full.starProjectedType
 import kotlin.reflect.typeOf
 
 @FrameworkDslMarker
-public class StateSpecBuilder<U : User, S : MessageState> @PublishedApi internal constructor(
+public class StateSpecBuilder<R : Role, S : MessageState> @PublishedApi internal constructor(
     private val priority: Int = 0,
     private val stateMapper: (MessageState) -> S?,
-    private val userMapper: (User) -> U?
+    private val roleMapper: (Role) -> R?
 ) {
     @PublishedApi
-    internal val triggers: MutableList<StateSpec.Trigger<S, U, *>> = mutableListOf()
+    internal val triggers: MutableList<StateSpec.Trigger<S, R, *>> = mutableListOf()
 
     @PublishedApi
     internal val commands: MutableList<BotCommand> = mutableListOf()
-    private var onNewHandler: StateChangeHandler<S, U, Nothing?, Nothing?>? = null
-    private var onEditHandler: StateChangeHandler<S, U, MessageId, Nothing?>? = null
+    private var onNewHandler: StateChangeHandler<S, R, Nothing?, Nothing?>? = null
+    private var onEditHandler: StateChangeHandler<S, R, MessageId, Nothing?>? = null
 
-    public fun render(block: PersistedMessageTemplateBuilder<S, U, *>.() -> Unit) {
+    public fun render(block: PersistedMessageTemplateBuilder<S, R, *>.() -> Unit) {
         onNew {
             val template = PersistedMessageTemplateBuilder(this).apply(block).build()
             val message = send(chat, template.entities, replyMarkup = template.keyboard)
@@ -57,22 +57,22 @@ public class StateSpecBuilder<U : User, S : MessageState> @PublishedApi internal
         }
     }
 
-    public fun onNewOrEdit(handler: StateChangeHandler<S, U, *, Nothing?>) {
+    public fun onNewOrEdit(handler: StateChangeHandler<S, R, *, Nothing?>) {
         onNew(handler)
         onEdit(handler)
     }
 
-    public fun onNew(handler: StateChangeHandler<S, U, Nothing?, Nothing?>) {
+    public fun onNew(handler: StateChangeHandler<S, R, Nothing?, Nothing?>) {
         check(onNewHandler == null) { "Only one onNew block allowed" }
         onNewHandler = handler
     }
 
-    public fun onEdit(handler: StateChangeHandler<S, U, MessageId, Nothing?>) {
+    public fun onEdit(handler: StateChangeHandler<S, R, MessageId, Nothing?>) {
         check(onEditHandler == null) { "Only one onEdit block allowed" }
         onEditHandler = handler
     }
 
-    public inline fun <reified Data : Any> on(noinline handler: Handler<S, U, MessageId, Data>) {
+    public inline fun <reified Data : Any> on(noinline handler: Handler<S, R, MessageId, Data>) {
         triggers.add(
             StateSpec.Trigger(handler) { data ->
                 runCatching {
@@ -110,10 +110,10 @@ public class StateSpecBuilder<U : User, S : MessageState> @PublishedApi internal
     }
 
     @PublishedApi
-    internal fun build(): StateSpec<U, S> = StateSpec(
+    internal fun build(): StateSpec<R, S> = StateSpec(
         priority = priority,
         stateMapper = stateMapper,
-        userMapper = userMapper,
+        roleMapper = roleMapper,
         triggers = triggers,
         _onNewHandler = onNewHandler,
         _onEditHandler = onEditHandler,
@@ -121,21 +121,21 @@ public class StateSpecBuilder<U : User, S : MessageState> @PublishedApi internal
     )
 }
 
-public inline fun <reified U : User, reified S : MessageState> inState(
+public inline fun <reified R : Role, reified S : MessageState> inState(
     priority: Int = 0,
-    block: StateSpecBuilder<U, S>.() -> Unit
-): StateSpec<U, S> = StateSpecBuilder(
+    block: StateSpecBuilder<R, S>.() -> Unit
+): StateSpec<R, S> = StateSpecBuilder(
     priority,
     stateMapper = { it as? S },
-    userMapper = { it as? U }
+    roleMapper = { it as? R }
 ).apply(block).build()
 
-public inline fun <reified U : User> command(
+public inline fun <reified R : Role> command(
     text: String,
     description: String?,
     priority: Int = 100,
-    crossinline handler: Handler<MessageState, U, MessageId, TextMessage>
-): StateSpec<U, MessageState> = inState<U, MessageState>(priority) {
+    crossinline handler: Handler<MessageState, R, MessageId, TextMessage>
+): StateSpec<R, MessageState> = inState<R, MessageState>(priority) {
     require(text.startsWith("/").not()) { "Command must not start with '/'" }
     val trigger = "/$text"
     description?.let { commands.add(BotCommand(text, it)) }

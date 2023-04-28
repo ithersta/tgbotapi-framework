@@ -25,7 +25,7 @@ data class MultipleChoiceState(
 
 @Single
 @Named("multipleChoice")
-fun multipleChoice() = inState<DefaultUser, MultipleChoiceState> {
+fun multipleChoice() = inState<DefaultRole, MultipleChoiceState> {
     render {
         text = "Что наденем?"
         keyboard = inlineKeyboard {
@@ -50,7 +50,7 @@ fun multipleChoice() = inState<DefaultUser, MultipleChoiceState> {
 
 @Single
 @Named("commands")
-fun startCommand() = command<DefaultUser>("start", description = "начать") {
+fun startCommand() = command<DefaultRole>("start", description = "начать") {
     state.new { MultipleChoiceState() }
     updateCommands()
 }
