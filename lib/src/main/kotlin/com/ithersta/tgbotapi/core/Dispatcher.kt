@@ -35,8 +35,8 @@ public class Dispatcher(
         val action = actionKey?.let { messageRepository.getAction(chatId, messageId, it) }
         val stateAccessor = StateAccessor.Static(
             snapshot = state,
-            _edit = { handleStateChange(chat, getUser, messageId, it, ::handleOnEdit) },
-            _new = { handleStateChange(chat, getUser, null, it, ::handleOnNew) }
+            _edit = { handleStateChange(chat, getUser, messageId, update, it, ::handleOnEdit) },
+            _new = { handleStateChange(chat, getUser, null, update, it, ::handleOnNew) }
         )
         val context = StatefulContextImpl(bot, stateAccessor, chat, messageId, getUser(), update) {
             updateCommands(chat.id, getUser)
@@ -53,15 +53,16 @@ public class Dispatcher(
         chat: Chat,
         getUser: () -> User,
         messageId: M,
+        update: Update,
         state: MessageState,
         handle: suspend (StatefulContextImpl<*, StateAccessor.Changing<*>, *, M>) -> Unit
     ) {
         val stateAccessor = StateAccessor.Changing(
             snapshot = state,
-            _new = { handleStateChange(chat, getUser, null, it, ::handleOnNew) },
+            _new = { handleStateChange(chat, getUser, null, update, it, ::handleOnNew) },
             _persist = { messageRepository.save(it) }
         )
-        val context = StatefulContextImpl(bot, stateAccessor, chat, messageId, getUser(), null) {
+        val context = StatefulContextImpl(bot, stateAccessor, chat, messageId, getUser(), update) {
             updateCommands(chat.id, getUser)
         }
         handle(context)
