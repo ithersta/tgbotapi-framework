@@ -1,30 +1,67 @@
 package com.ithersta.tgbotapi.core
 
+import arrow.resilience.Schedule
+import arrow.resilience.retryOrElse
 import com.ithersta.tgbotapi.basetypes.MessageState
 import com.ithersta.tgbotapi.basetypes.Role
 import com.ithersta.tgbotapi.core.runner.StatefulRunnerContext
 import com.ithersta.tgbotapi.persistence.MessageRepository
+import com.ithersta.tgbotapi.persistence.PendingState
 import dev.inmo.tgbotapi.bot.TelegramBot
 import dev.inmo.tgbotapi.extensions.api.bot.setMyCommands
+import dev.inmo.tgbotapi.extensions.api.chat.get.getChat
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
 import dev.inmo.tgbotapi.types.ChatIdentifier
 import dev.inmo.tgbotapi.types.MessageId
 import dev.inmo.tgbotapi.types.UserId
 import dev.inmo.tgbotapi.types.chat.Chat
 import dev.inmo.tgbotapi.types.commands.BotCommandScope
+import dev.inmo.tgbotapi.types.toChatId
 import dev.inmo.tgbotapi.types.update.abstracts.Update
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.launch
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 public class Dispatcher(
     stateSpecs: List<StateSpec<*, *>>,
     private val messageRepository: MessageRepository,
     private val updateTransformers: UpdateTransformers,
     private val getRole: GetRole,
+    private val pendingStateDelay: Duration = 0.2.seconds
 ) {
     private val stateSpecs = stateSpecs.sortedByDescending { it.priority }
     private val unboundStateAccessor: UnboundStateAccessor =
-        UnboundStateAccessorImpl { chatId, state -> messageRepository.addPending(chatId.chatId, state) }
+        UnboundStateAccessorImpl { chatId, state -> messageRepository.save(PendingState.New(chatId.chatId, state)) }
     public val BehaviourContext.statefulRunnerContext: StatefulRunnerContext
         get() = StatefulRunnerContext(this, unboundStateAccessor)
+
+    public fun BehaviourContext.applyPendingStates(): Job = launch {
+        messageRepository.getPending().collect { pendingState ->
+            delay(pendingStateDelay)
+            if (pendingState.state != null) {
+                (Schedule.exponential<Throwable>(pendingStateDelay) and Schedule.recurs(3)).retryOrElse({
+                    val chat = getChat(pendingState.chatId.toChatId())
+                    val getRole = { getRole(UserId(pendingState.chatId)) }
+                    val stateAccessor = StateAccessor.Changing(
+                        snapshot = pendingState.state,
+                        new = { handleStateChange(chat, getRole, null, it, ::handleOnNew) },
+                        persist = { messageRepository.save(it) },
+                        unboundStateAccessor = unboundStateAccessor
+                    )
+                    val context = HandlerContextImpl(bot, stateAccessor, chat, null, getRole()) {
+                        updateCommands(chat.id, getRole)
+                    }
+                    handleOnNew(context)
+                }) { exception, _ ->
+                    System.err.println("Couldn't apply pending state for chat ${pendingState.chatId}")
+                    exception.printStackTrace(System.err)
+                }
+            }
+        }
+    }
 
     public suspend fun BehaviourContext.handle(update: Update): Unit = with(updateTransformers) {
         val chat = update.toChat() ?: return

@@ -14,14 +14,14 @@ public interface UnboundStateAccessor {
      * @param chatId the chat where the message will be sent.
      * @param state returns new state.
      */
-    public fun new(chatId: IdChatIdentifier, state: () -> MessageState)
+    public suspend fun new(chatId: IdChatIdentifier, state: () -> MessageState)
 }
 
 internal class UnboundStateAccessorImpl(
-    new: (IdChatIdentifier, MessageState) -> Unit,
+    new: suspend (IdChatIdentifier, MessageState) -> Unit,
 ) : UnboundStateAccessor {
     private val _new = new
-    override fun new(chatId: IdChatIdentifier, state: () -> MessageState) = _new(chatId, state())
+    override suspend fun new(chatId: IdChatIdentifier, state: () -> MessageState) = _new(chatId, state())
 }
 
 /**

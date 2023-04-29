@@ -3,8 +3,11 @@ package com.ithersta.tgbotapi.sqlite
 import com.ithersta.tgbotapi.basetypes.Action
 import com.ithersta.tgbotapi.basetypes.MessageState
 import com.ithersta.tgbotapi.persistence.MessageRepository
+import com.ithersta.tgbotapi.persistence.PendingState
 import com.ithersta.tgbotapi.persistence.PersistedMessage
 import dev.inmo.tgbotapi.types.MessageId
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.*
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.decodeFromByteArray
 import kotlinx.serialization.encodeToByteArray
@@ -18,6 +21,8 @@ public class SqliteMessageRepository(
     private val protoBuf: ProtoBuf,
     jdbc: String = "jdbc:sqlite:states.db",
 ) : MessageRepository {
+    private val pendingUpdates = MutableSharedFlow<Unit>()
+
     private val db = Database.connect(jdbc, "org.sqlite.JDBC").also {
         transaction(it) {
             SchemaUtils.createMissingTablesAndColumns(PersistedMessages, PersistedActions, PendingStateUpdates)
@@ -81,13 +86,43 @@ public class SqliteMessageRepository(
         protoBuf.decodeFromByteArray<Action>(this)
     }?.getOrNull()
 
-    override fun addPending(chatId: Long, state: MessageState) {
-        val serializedState = protoBuf.encodeToByteArray<MessageState>(state)
+    override suspend fun save(pendingState: PendingState.New) {
+        val serializedState = protoBuf.encodeToByteArray<MessageState>(pendingState.state)
         transaction(db) {
             PendingStateUpdates.insert {
-                it[PendingStateUpdates.chatId] = chatId
-                it[PendingStateUpdates.state] = serializedState
+                it[chatId] = pendingState.chatId
+                it[state] = serializedState
             }
         }
+        pendingUpdates.emit(Unit)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override suspend fun getPending(): Flow<PendingState> = merge(pendingUpdates, flowOf(Unit)).flatMapLatest {
+        flow {
+            generateSequence {
+                transaction(db) {
+                    PendingStateUpdates
+                        .selectAll()
+                        .limit(1)
+                        .firstOrNull()
+                }?.let {
+                    PendingState(
+                        id = it[PendingStateUpdates.id].value,
+                        chatId = it[PendingStateUpdates.chatId],
+                        state = runCatching {
+                            protoBuf.decodeFromByteArray<MessageState>(it[PendingStateUpdates.state])
+                        }.getOrNull()
+                    )
+                }
+            }.forEach {
+                emit(it)
+                deletePending(it.id)
+            }
+        }
+    }
+
+    override fun deletePending(id: Long): Unit = transaction(db) {
+        PendingStateUpdates.deleteWhere { PendingStateUpdates.id eq id }
     }
 }

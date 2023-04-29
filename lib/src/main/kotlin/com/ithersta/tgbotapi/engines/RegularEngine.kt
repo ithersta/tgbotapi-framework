@@ -12,6 +12,7 @@ import dev.inmo.tgbotapi.utils.PreviewFeature
 public fun Dispatcher.regularEngine(
     exceptionHandler: suspend TelegramBot.(Throwable) -> Unit = { it.printStackTrace() },
 ): StatefulRunner = statefulRunner {
+    applyPendingStates()
     allUpdatesFlow.subscribeSafelyWithoutExceptionsAsync(scope, { it.sourceChat() }) { update ->
         runCatching {
             handle(update)

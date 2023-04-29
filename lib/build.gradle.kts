@@ -8,6 +8,7 @@ repositories {
 }
 
 dependencies {
+    implementation(libs.arrow.resilience)
     api(libs.inmo.tgbotapi)
     testImplementation(kotlin("test"))
 }
