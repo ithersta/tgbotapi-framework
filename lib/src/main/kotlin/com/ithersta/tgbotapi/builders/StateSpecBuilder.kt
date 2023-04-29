@@ -36,9 +36,9 @@ public class StateSpecBuilder<R : Role, S : MessageState> @PublishedApi internal
     private var onNewHandler: StateChangeHandler<S, R, Nothing?, Nothing?>? = null
     private var onEditHandler: StateChangeHandler<S, R, MessageId, Nothing?>? = null
 
-    public fun render(block: PersistedMessageTemplateBuilder<S, R, *>.() -> Unit) {
+    public fun render(block: suspend PersistedMessageTemplateBuilder<S, R, *>.() -> Unit) {
         _onNew {
-            val template = PersistedMessageTemplateBuilder(this).apply(block).build()
+            val template = PersistedMessageTemplateBuilder(this).apply { block() }.build()
             val message = send(chat, template.entities, replyMarkup = template.keyboard ?: ReplyKeyboardRemove())
             state.persist(
                 PersistedMessage(
@@ -51,7 +51,7 @@ public class StateSpecBuilder<R : Role, S : MessageState> @PublishedApi internal
             )
         }
         _onEdit {
-            val template = PersistedMessageTemplateBuilder(this).apply(block).build()
+            val template = PersistedMessageTemplateBuilder(this).apply { block() }.build()
             runCatching {
                 edit(
                     chatId = chat.id,
