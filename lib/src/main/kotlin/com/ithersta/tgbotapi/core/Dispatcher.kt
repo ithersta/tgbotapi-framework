@@ -1,8 +1,8 @@
 package com.ithersta.tgbotapi.core
 
-import com.ithersta.tgbotapi.StatefulContextImpl
 import com.ithersta.tgbotapi.basetypes.MessageState
 import com.ithersta.tgbotapi.basetypes.Role
+import com.ithersta.tgbotapi.core.runner.StatefulRunnerContext
 import com.ithersta.tgbotapi.persistence.MessageRepository
 import dev.inmo.tgbotapi.bot.TelegramBot
 import dev.inmo.tgbotapi.extensions.api.bot.setMyCommands
@@ -18,9 +18,13 @@ public class Dispatcher(
     stateSpecs: List<StateSpec<*, *>>,
     private val messageRepository: MessageRepository,
     private val updateTransformers: UpdateTransformers,
-    private val getRole: GetRole
+    private val getRole: GetRole,
 ) {
     private val stateSpecs = stateSpecs.sortedByDescending { it.priority }
+    private val unboundStateAccessor: UnboundStateAccessor =
+        UnboundStateAccessorImpl { chatId, state -> messageRepository.addPending(chatId.chatId, state) }
+    public val BehaviourContext.statefulRunnerContext: StatefulRunnerContext
+        get() = StatefulRunnerContext(this, unboundStateAccessor)
 
     public suspend fun BehaviourContext.handle(update: Update): Unit = with(updateTransformers) {
         val chat = update.toChat() ?: return
@@ -35,13 +39,11 @@ public class Dispatcher(
         val action = actionKey?.let { messageRepository.getAction(chatId, messageId, it) }
         val stateAccessor = StateAccessor.Static(
             snapshot = state,
-            _edit = { handleStateChange(chat, getRole, messageId, update, it, ::handleOnEdit) },
-            _new = { handleStateChange(chat, getRole, null, update, it, ::handleOnNew) },
-            _newForeign = { foreignChat, newState ->
-                handleStateChange(foreignChat, getRole, null, update, newState, ::handleOnNew)
-            }
+            edit = { handleStateChange(chat, getRole, messageId, it, ::handleOnEdit) },
+            new = { handleStateChange(chat, getRole, null, it, ::handleOnNew) },
+            unboundStateAccessor = unboundStateAccessor
         )
-        val context = StatefulContextImpl(bot, stateAccessor, chat, messageId, getRole(), update) {
+        val context = HandlerContextImpl(bot, stateAccessor, chat, messageId, getRole()) {
             updateCommands(chat.id, getRole)
         }
         handle(context, update.onSuccess(), listOfNotNull(data, action, action?.to(data)))
@@ -56,34 +58,31 @@ public class Dispatcher(
         chat: Chat,
         getRole: () -> Role,
         messageId: M,
-        update: Update,
         state: MessageState,
-        handle: suspend (StatefulContextImpl<*, StateAccessor.Changing<*>, *, M>) -> Unit
+        handle: suspend (HandlerContextImpl<*, StateAccessor.Changing<*>, *, M>) -> Unit,
     ) {
         val stateAccessor = StateAccessor.Changing(
             snapshot = state,
-            _new = { handleStateChange(chat, getRole, null, update, it, ::handleOnNew) },
-            _newForeign = { foreignChat, newState ->
-                handleStateChange(foreignChat, getRole, null, update, newState, ::handleOnNew)
-            },
-            _persist = { messageRepository.save(it) }
+            new = { handleStateChange(chat, getRole, null, it, ::handleOnNew) },
+            persist = { messageRepository.save(it) },
+            unboundStateAccessor = unboundStateAccessor
         )
-        val context = StatefulContextImpl(bot, stateAccessor, chat, messageId, getRole(), update) {
+        val context = HandlerContextImpl(bot, stateAccessor, chat, messageId, getRole()) {
             updateCommands(chat.id, getRole)
         }
         handle(context)
     }
 
     private suspend fun handle(
-        context: StatefulContextImpl<*, StateAccessor.Static<*>, *, MessageId>,
+        context: HandlerContextImpl<*, StateAccessor.Static<*>, *, MessageId>,
         onSuccess: OnSuccess?,
-        data: List<Any>
+        data: List<Any>,
     ) = stateSpecs.any { it.handle(context, onSuccess, data) }
 
-    private suspend fun handleOnEdit(context: StatefulContextImpl<*, StateAccessor.Changing<*>, *, MessageId>) =
+    private suspend fun handleOnEdit(context: HandlerContextImpl<*, StateAccessor.Changing<*>, *, MessageId>) =
         stateSpecs.any { it.handleOnEdit(context) }
 
-    private suspend fun handleOnNew(context: StatefulContextImpl<*, StateAccessor.Changing<*>, *, Nothing?>) =
+    private suspend fun handleOnNew(context: HandlerContextImpl<*, StateAccessor.Changing<*>, *, Nothing?>) =
         stateSpecs.any { it.handleOnNew(context) }
 
     public interface UpdateTransformers {

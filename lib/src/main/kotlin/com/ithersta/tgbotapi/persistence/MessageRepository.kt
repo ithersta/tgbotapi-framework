@@ -9,4 +9,5 @@ public interface MessageRepository {
     public fun get(chatId: Long, messageId: Long): MessageState?
     public fun getLast(chatId: Long): Pair<MessageState, MessageId>?
     public fun getAction(chatId: Long, messageId: Long, key: String): Action?
+    public fun addPending(chatId: Long, state: MessageState)
 }

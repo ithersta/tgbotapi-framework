@@ -1,13 +1,12 @@
 package com.ithersta.tgbotapi.builders
 
-import com.ithersta.tgbotapi.FrameworkDslMarker
-import com.ithersta.tgbotapi.StatefulContext
 import com.ithersta.tgbotapi.basetypes.MessageState
 import com.ithersta.tgbotapi.basetypes.Role
 import com.ithersta.tgbotapi.core.Handler
 import com.ithersta.tgbotapi.core.StateAccessor
 import com.ithersta.tgbotapi.core.StateChangeHandler
 import com.ithersta.tgbotapi.core.StateSpec
+import com.ithersta.tgbotapi.core.HandlerContext
 import com.ithersta.tgbotapi.persistence.PersistedMessage
 import dev.inmo.tgbotapi.bot.exceptions.MessageIsNotModifiedException
 import dev.inmo.tgbotapi.extensions.api.edit.edit
@@ -23,14 +22,14 @@ import kotlin.reflect.full.starProjectedType
 import kotlin.reflect.typeOf
 
 public typealias StateChangeHandlerReturningMessage<S, U, M, Data> =
-        suspend StatefulContext<S, StateAccessor.Changing<S>, U, M>.(Data) -> Message
+    suspend HandlerContext<S, StateAccessor.Changing<S>, U, M>.(Data) -> Message
 
 @FrameworkDslMarker
 public class StateSpecBuilder<R : Role, S : MessageState> @PublishedApi internal constructor(
     private val priority: Int = 0,
     private val stateMapper: (MessageState) -> S?,
     private val roleMapper: (Role) -> R?,
-    private val handleGlobalUpdates: Boolean
+    private val handleGlobalUpdates: Boolean,
 ) {
     @PublishedApi
     internal val triggers: MutableList<StateSpec.Trigger<S, R, *>> = mutableListOf()
@@ -50,8 +49,8 @@ public class StateSpecBuilder<R : Role, S : MessageState> @PublishedApi internal
                     messageId = message.messageId,
                     state = state.snapshot,
                     handleGlobalUpdates = handleGlobalUpdates,
-                    actions = template.actions
-                )
+                    actions = template.actions,
+                ),
             )
         }
         _onEdit {
@@ -61,7 +60,7 @@ public class StateSpecBuilder<R : Role, S : MessageState> @PublishedApi internal
                     chatId = chat.id,
                     messageId = messageId,
                     entities = template.entities,
-                    replyMarkup = template.keyboard
+                    replyMarkup = template.keyboard,
                 )
             }.onFailure { exception ->
                 if (exception !is MessageIsNotModifiedException) {
@@ -74,8 +73,8 @@ public class StateSpecBuilder<R : Role, S : MessageState> @PublishedApi internal
                     messageId = messageId,
                     state = state.snapshot,
                     handleGlobalUpdates = handleGlobalUpdates,
-                    actions = template.actions
-                )
+                    actions = template.actions,
+                ),
             )
         }
     }
@@ -119,7 +118,7 @@ public class StateSpecBuilder<R : Role, S : MessageState> @PublishedApi internal
                             val pair = data as? Pair<*, *> ?: return@runCatching null
                             (pair as? Data)?.takeIf {
                                 pair.first!!::class.starProjectedType.isSubtypeOf(type.arguments[0].type!!) &&
-                                        pair.second!!::class.starProjectedType.isSubtypeOf(type.arguments[1].type!!)
+                                    pair.second!!::class.starProjectedType.isSubtypeOf(type.arguments[1].type!!)
                             }
                         }
 
@@ -142,7 +141,7 @@ public class StateSpecBuilder<R : Role, S : MessageState> @PublishedApi internal
                         }
                     }
                 }.getOrNull()
-            }
+            },
         )
     }
 
@@ -154,7 +153,7 @@ public class StateSpecBuilder<R : Role, S : MessageState> @PublishedApi internal
         triggers = triggers,
         _onNewHandler = onNewHandler,
         _onEditHandler = onEditHandler,
-        commands = commands
+        commands = commands,
     )
 }
 
@@ -171,12 +170,12 @@ public class StateSpecBuilder<R : Role, S : MessageState> @PublishedApi internal
 public inline fun <reified R : Role, reified S : MessageState> inState(
     priority: Int = 0,
     handleGlobalUpdates: Boolean = true,
-    block: StateSpecBuilder<R, S>.() -> Unit
+    block: StateSpecBuilder<R, S>.() -> Unit,
 ): StateSpec<R, S> = StateSpecBuilder(
     priority,
     stateMapper = { it as? S },
     roleMapper = { it as? R },
-    handleGlobalUpdates
+    handleGlobalUpdates,
 ).apply(block).build()
 
 /**
@@ -193,7 +192,7 @@ public inline fun <reified R : Role> command(
     text: String,
     description: String?,
     priority: Int = 100,
-    crossinline handler: Handler<MessageState, R, MessageId, TextMessage>
+    crossinline handler: Handler<MessageState, R, MessageId, TextMessage>,
 ): StateSpec<R, MessageState> = inState<R, MessageState>(priority) {
     require(text.startsWith("/").not()) { "Command must not start with '/'" }
     val trigger = "/$text"

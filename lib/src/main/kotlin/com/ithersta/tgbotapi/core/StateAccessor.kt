@@ -2,7 +2,27 @@ package com.ithersta.tgbotapi.core
 
 import com.ithersta.tgbotapi.basetypes.MessageState
 import com.ithersta.tgbotapi.persistence.PersistedMessage
-import dev.inmo.tgbotapi.types.chat.Chat
+import dev.inmo.tgbotapi.types.IdChatIdentifier
+
+/**
+ * Provides a way to create a new state.
+ */
+public interface UnboundStateAccessor {
+    /**
+     * Send a new message with the specified state in the specified chat.
+     *
+     * @param chatId the chat where the message will be sent.
+     * @param state returns new state.
+     */
+    public fun new(chatId: IdChatIdentifier, state: () -> MessageState)
+}
+
+internal class UnboundStateAccessorImpl(
+    new: (IdChatIdentifier, MessageState) -> Unit,
+) : UnboundStateAccessor {
+    private val _new = new
+    override fun new(chatId: IdChatIdentifier, state: () -> MessageState) = _new(chatId, state())
+}
 
 /**
  * Provides a way to access state and change it.
@@ -11,32 +31,28 @@ import dev.inmo.tgbotapi.types.chat.Chat
  */
 public sealed class StateAccessor<out S : MessageState> private constructor(
     public val snapshot: S,
-    private val _new: suspend (MessageState) -> Unit,
-    private val _newForeign: suspend (Chat, MessageState) -> Unit,
-) {
+    new: suspend (MessageState) -> Unit,
+    unboundStateAccessor: UnboundStateAccessor,
+) : UnboundStateAccessor by unboundStateAccessor {
+    private val _new = new
+
     /**
-     * Send a new message with a specified state in this chat.
+     * Send a new message with the specified state in this chat.
      *
      * @param map transform current state into the new one.
      */
     public suspend fun new(map: S.() -> MessageState): Unit = _new(map(snapshot))
 
-    /**
-     * Send a new message with a specified state in a different chat.
-     *
-     * @param chat the chat where the message will be sent.
-     * @param create creates a new state.
-     */
-    public suspend fun new(chat: Chat, create: () -> MessageState): Unit = _newForeign(chat, create())
-
     public class Static<out S : MessageState> internal constructor(
         snapshot: S,
-        _new: suspend (MessageState) -> Unit,
-        _newForeign: suspend (Chat, MessageState) -> Unit,
-        private val _edit: suspend (MessageState) -> Unit,
-    ) : StateAccessor<S>(snapshot, _new, _newForeign) {
+        new: suspend (MessageState) -> Unit,
+        edit: suspend (MessageState) -> Unit,
+        unboundStateAccessor: UnboundStateAccessor,
+    ) : StateAccessor<S>(snapshot, new, unboundStateAccessor) {
+        private val _edit = edit
+
         /**
-         * Edits the current message using a specified state.
+         * Edits the current message using the specified state.
          *
          * @param map transform current state into the new one.
          */
@@ -45,10 +61,12 @@ public sealed class StateAccessor<out S : MessageState> private constructor(
 
     public class Changing<out S : MessageState> internal constructor(
         snapshot: S,
-        _new: suspend (MessageState) -> Unit,
-        _newForeign: suspend (Chat, MessageState) -> Unit,
-        private val _persist: (PersistedMessage) -> Unit
-    ) : StateAccessor<S>(snapshot, _new, _newForeign) {
+        new: suspend (MessageState) -> Unit,
+        persist: (PersistedMessage) -> Unit,
+        unboundStateAccessor: UnboundStateAccessor,
+    ) : StateAccessor<S>(snapshot, new, unboundStateAccessor) {
+        private val _persist = persist
+
         /**
          * Persists the message with its message id, state, and actions.
          *

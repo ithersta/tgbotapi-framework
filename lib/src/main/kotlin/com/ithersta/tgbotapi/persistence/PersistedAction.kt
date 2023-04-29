@@ -6,7 +6,7 @@ import kotlin.streams.asSequence
 
 public class PersistedAction(
     public val key: String,
-    public val action: Action
+    public val action: Action,
 ) {
     internal companion object {
         private val secureRandom = SecureRandom.getInstanceStrong()
@@ -15,7 +15,7 @@ public class PersistedAction(
         fun from(action: Action) = PersistedAction(
             key = secureRandom.ints(64, 0, allowedChars.size).asSequence()
                 .joinToString(separator = "") { allowedChars[it].toString() },
-            action = action
+            action = action,
         )
     }
 }

@@ -14,7 +14,7 @@ private const val BASE_MESSAGE_STATE_NAME = "$BASE_PACKAGE.MessageState"
 
 class Processor(
     private val codeGenerator: CodeGenerator,
-    private val logger: KSPLogger
+    private val logger: KSPLogger,
 ) : SymbolProcessor {
     private val subclasses = listOf(BASE_ACTION_NAME, BASE_MESSAGE_STATE_NAME)
         .associateWith { mutableListOf<KSClassDeclaration>() }
@@ -62,27 +62,27 @@ class Processor(
                             .beginControlFlow("return SerializersModule")
                             .apply {
                                 distinctSubclasses.forEach { (baseClassName, subclasses) ->
-                                    beginControlFlow("polymorphic(${baseClassName}::class)")
+                                    beginControlFlow("polymorphic($baseClassName::class)")
                                     subclasses
                                         .forEach { subclass ->
                                             if (!subclass.annotations.any { it.shortName.getShortName() == "Serializable" }) {
                                                 logger.error(
                                                     "\n${subclass.qualifiedName?.asString()} is missing a @Serializable annotation",
-                                                    subclass
+                                                    subclass,
                                                 )
                                             }
                                             addStatement(
                                                 "subclass(%T::class)",
-                                                subclass.asStarProjectedType().toTypeName()
+                                                subclass.asStarProjectedType().toTypeName(),
                                             )
                                         }
                                     endControlFlow()
                                 }
                             }
                             .endControlFlow()
-                            .build()
+                            .build(),
                     )
-                    .build()
+                    .build(),
             )
             .build()
             .writeTo(codeGenerator = codeGenerator, dependencies = dependencies)
@@ -94,7 +94,7 @@ class Processor(
                     .receiver(ClassName("org.koin.core", "KoinApplication"))
                     .addModifiers(KModifier.SUSPEND)
                     .addCode("return autoconfigure(generatedSerializersModule())")
-                    .build()
+                    .build(),
             )
             .build()
             .writeTo(codeGenerator = codeGenerator, aggregating = false)

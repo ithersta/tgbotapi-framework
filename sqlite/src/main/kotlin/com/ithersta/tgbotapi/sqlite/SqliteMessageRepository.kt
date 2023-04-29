@@ -16,11 +16,11 @@ import org.jetbrains.exposed.sql.transactions.transaction
 @OptIn(ExperimentalSerializationApi::class)
 public class SqliteMessageRepository(
     private val protoBuf: ProtoBuf,
-    jdbc: String = "jdbc:sqlite:states.db"
+    jdbc: String = "jdbc:sqlite:states.db",
 ) : MessageRepository {
     private val db = Database.connect(jdbc, "org.sqlite.JDBC").also {
         transaction(it) {
-            SchemaUtils.createMissingTablesAndColumns(PersistedMessages, PersistedActions)
+            SchemaUtils.createMissingTablesAndColumns(PersistedMessages, PersistedActions, PendingStateUpdates)
         }
     }
 
@@ -80,4 +80,14 @@ public class SqliteMessageRepository(
     }?.runCatching {
         protoBuf.decodeFromByteArray<Action>(this)
     }?.getOrNull()
+
+    override fun addPending(chatId: Long, state: MessageState) {
+        val serializedState = protoBuf.encodeToByteArray<MessageState>(state)
+        transaction(db) {
+            PendingStateUpdates.insert {
+                it[PendingStateUpdates.chatId] = chatId
+                it[PendingStateUpdates.state] = serializedState
+            }
+        }
+    }
 }

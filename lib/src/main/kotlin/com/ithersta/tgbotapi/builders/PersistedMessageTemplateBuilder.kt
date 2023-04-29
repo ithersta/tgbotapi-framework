@@ -1,12 +1,10 @@
 package com.ithersta.tgbotapi.builders
 
-import com.ithersta.tgbotapi.FrameworkDslMarker
-import com.ithersta.tgbotapi.StatefulContext
 import com.ithersta.tgbotapi.basetypes.Action
 import com.ithersta.tgbotapi.basetypes.MessageState
 import com.ithersta.tgbotapi.basetypes.Role
-import com.ithersta.tgbotapi.core.MessageTemplate
 import com.ithersta.tgbotapi.core.StateAccessor
+import com.ithersta.tgbotapi.core.HandlerContext
 import com.ithersta.tgbotapi.persistence.PersistedAction
 import dev.inmo.tgbotapi.extensions.utils.formatting.toMarkdownTexts
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.InlineKeyboardRowBuilder
@@ -14,13 +12,20 @@ import dev.inmo.tgbotapi.extensions.utils.types.buttons.dataButton
 import dev.inmo.tgbotapi.types.MessageId
 import dev.inmo.tgbotapi.types.buttons.InlineKeyboardMarkup
 import dev.inmo.tgbotapi.types.message.textsources.TextSource
+import dev.inmo.tgbotapi.types.message.textsources.TextSourcesList
 import dev.inmo.tgbotapi.utils.buildEntities
 import dev.inmo.tgbotapi.utils.regular
 
+internal class MessageTemplate(
+    val entities: TextSourcesList,
+    val keyboard: InlineKeyboardMarkup?,
+    val actions: List<PersistedAction>,
+)
+
 @FrameworkDslMarker
 public class PersistedMessageTemplateBuilder<S : MessageState, R : Role, M : MessageId?>(
-    context: StatefulContext<S, StateAccessor.Changing<S>, R, M>
-) : StatefulContext<S, StateAccessor.Changing<S>, R, M> by context {
+    context: HandlerContext<S, StateAccessor.Changing<S>, R, M>,
+) : HandlerContext<S, StateAccessor.Changing<S>, R, M> by context {
     public var entities: List<TextSource> = emptyList()
     public var text: String
         get() = entities.toMarkdownTexts().joinToString("")

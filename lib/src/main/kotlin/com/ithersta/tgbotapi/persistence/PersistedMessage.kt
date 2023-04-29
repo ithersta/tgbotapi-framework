@@ -7,5 +7,5 @@ public class PersistedMessage(
     public val messageId: Long,
     public val state: MessageState,
     public val handleGlobalUpdates: Boolean,
-    public val actions: List<PersistedAction> = emptyList()
+    public val actions: List<PersistedAction> = emptyList(),
 )
