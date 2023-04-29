@@ -23,7 +23,8 @@ class Processor(
     private fun getAllDeclarations(resolver: Resolver): List<KSDeclaration> {
         val declarations: MutableList<KSDeclaration> =
             resolver.getAllFiles().flatMap { it.declarations }.toMutableList()
-        declarations.forEach { declaration ->
+        for (i in 0 until declarations.size) {
+            val declaration = declarations[i]
             if (declaration is KSDeclarationContainer) {
                 declarations.addAll(declaration.declarations)
             }
