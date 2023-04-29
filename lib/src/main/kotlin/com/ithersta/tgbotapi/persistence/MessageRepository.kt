@@ -12,5 +12,4 @@ public interface MessageRepository {
     public fun getAction(chatId: Long, messageId: Long, key: String): Action?
     public suspend fun save(pendingState: PendingState.New)
     public suspend fun getPending(): Flow<PendingState>
-    public fun deletePending(id: Long)
 }

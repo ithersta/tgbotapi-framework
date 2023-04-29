@@ -122,7 +122,7 @@ public class SqliteMessageRepository(
         }
     }
 
-    override fun deletePending(id: Long): Unit = transaction(db) {
+    private fun deletePending(id: Long): Unit = transaction(db) {
         PendingStateUpdates.deleteWhere { PendingStateUpdates.id eq id }
     }
 }
