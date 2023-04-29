@@ -2,17 +2,14 @@ package com.ithersta.tgbotapi.builders
 
 import com.ithersta.tgbotapi.basetypes.MessageState
 import com.ithersta.tgbotapi.basetypes.Role
-import com.ithersta.tgbotapi.core.Handler
-import com.ithersta.tgbotapi.core.StateAccessor
-import com.ithersta.tgbotapi.core.StateChangeHandler
-import com.ithersta.tgbotapi.core.StateSpec
-import com.ithersta.tgbotapi.core.HandlerContext
+import com.ithersta.tgbotapi.core.*
 import com.ithersta.tgbotapi.persistence.PersistedMessage
 import dev.inmo.tgbotapi.bot.exceptions.MessageIsNotModifiedException
 import dev.inmo.tgbotapi.extensions.api.edit.edit
 import dev.inmo.tgbotapi.extensions.api.send.send
 import dev.inmo.tgbotapi.types.BotCommand
 import dev.inmo.tgbotapi.types.MessageId
+import dev.inmo.tgbotapi.types.buttons.ReplyKeyboardRemove
 import dev.inmo.tgbotapi.types.message.abstracts.ChatEventMessage
 import dev.inmo.tgbotapi.types.message.abstracts.ContentMessage
 import dev.inmo.tgbotapi.types.message.abstracts.Message
@@ -22,7 +19,7 @@ import kotlin.reflect.full.starProjectedType
 import kotlin.reflect.typeOf
 
 public typealias StateChangeHandlerReturningMessage<S, U, M, Data> =
-    suspend HandlerContext<S, StateAccessor.Changing<S>, U, M>.(Data) -> Message
+        suspend HandlerContext<S, StateAccessor.Changing<S>, U, M>.(Data) -> Message
 
 @FrameworkDslMarker
 public class StateSpecBuilder<R : Role, S : MessageState> @PublishedApi internal constructor(
@@ -42,7 +39,7 @@ public class StateSpecBuilder<R : Role, S : MessageState> @PublishedApi internal
     public fun render(block: PersistedMessageTemplateBuilder<S, R, *>.() -> Unit) {
         _onNew {
             val template = PersistedMessageTemplateBuilder(this).apply(block).build()
-            val message = send(chat, template.entities, replyMarkup = template.keyboard)
+            val message = send(chat, template.entities, replyMarkup = template.keyboard ?: ReplyKeyboardRemove())
             state.persist(
                 PersistedMessage(
                     chatId = chat.id.chatId,
@@ -118,7 +115,7 @@ public class StateSpecBuilder<R : Role, S : MessageState> @PublishedApi internal
                             val pair = data as? Pair<*, *> ?: return@runCatching null
                             (pair as? Data)?.takeIf {
                                 pair.first!!::class.starProjectedType.isSubtypeOf(type.arguments[0].type!!) &&
-                                    pair.second!!::class.starProjectedType.isSubtypeOf(type.arguments[1].type!!)
+                                        pair.second!!::class.starProjectedType.isSubtypeOf(type.arguments[1].type!!)
                             }
                         }
 
