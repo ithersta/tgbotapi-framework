@@ -25,6 +25,7 @@ ksp-api = { module = "com.google.devtools.ksp:symbol-processing-api", version.re
 kotlinpoet = { module = "com.squareup:kotlinpoet", version.ref = "kotlinpoet" }
 kotlinpoet-ksp = { module = "com.squareup:kotlinpoet-ksp", version.ref = "kotlinpoet" }
 arrow-resilience = { module = "io.arrow-kt:arrow-resilience", version.ref = "arrow" }
+kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

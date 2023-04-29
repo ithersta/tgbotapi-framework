@@ -18,11 +18,19 @@ import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.protobuf.ProtoBuf
 import org.koin.core.KoinApplication
 import java.io.File
+import kotlin.reflect.full.declaredMemberProperties
+import kotlin.reflect.full.isSubtypeOf
+import kotlin.reflect.full.starProjectedType
 
 suspend fun KoinApplication.autoconfigure(serializersModule: SerializersModule) {
     val messageRepository = koin.getOrNull<MessageRepository>() ?: defaultMessageRepository(serializersModule)
     val getRole = koin.get<GetRole>()
-    val stateSpecs = koin.getAll<StateSpec<*, *>>()
+    val dialogueFlows = koin.getAll<DialogueFlow>()
+    val stateSpecs = koin.getAll<StateSpec<*, *>>() + dialogueFlows.flatMap { flow ->
+        flow::class.declaredMemberProperties
+            .filter { it.returnType.isSubtypeOf(StateSpec::class.starProjectedType) }
+            .map { it.getter.call(flow) as StateSpec<*, *> }
+    }
     val telegramBot = koin.getOrNull<TelegramBot>() ?: defaultTelegramBot()
     val runners = koin.getAll<StatefulRunner>()
     val updateTransformers = koin.getOrNull<Dispatcher.UpdateTransformers>() ?: DefaultUpdateTransformers

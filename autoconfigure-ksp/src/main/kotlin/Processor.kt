@@ -2,6 +2,7 @@ import com.google.devtools.ksp.getClassDeclarationByName
 import com.google.devtools.ksp.processing.*
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSDeclaration
 import com.google.devtools.ksp.symbol.KSDeclarationContainer
 import com.google.devtools.ksp.validate
 import com.squareup.kotlinpoet.*
@@ -19,13 +20,20 @@ class Processor(
     private val subclasses = listOf(BASE_ACTION_NAME, BASE_MESSAGE_STATE_NAME)
         .associateWith { mutableListOf<KSClassDeclaration>() }
 
+    private fun getAllDeclarations(resolver: Resolver): List<KSDeclaration> {
+        val declarations: MutableList<KSDeclaration> =
+            resolver.getAllFiles().flatMap { it.declarations }.toMutableList()
+        declarations.forEach { declaration ->
+            if (declaration is KSDeclarationContainer) {
+                declarations.addAll(declaration.declarations)
+            }
+        }
+        return declarations
+    }
+
     override fun process(resolver: Resolver): List<KSAnnotated> {
-        val declarations = resolver.getAllFiles()
-            .flatMap { it.declarations }
-        val nestedDeclarations = declarations
-            .filterIsInstance<KSDeclarationContainer>()
-            .flatMap { it.declarations }
-        (declarations + nestedDeclarations + resolver.getClassDeclarationByName("com.ithersta.tgbotapi.basetypes.MessageState.Empty"))
+        val declarations = getAllDeclarations(resolver)
+        (declarations + resolver.getClassDeclarationByName("com.ithersta.tgbotapi.basetypes.MessageState.Empty"))
             .filterIsInstance<KSClassDeclaration>()
             .flatMap { subclasses.keys.map { baseClassName -> baseClassName to it } }
             .filter { (baseClassName, classDeclaration) ->
