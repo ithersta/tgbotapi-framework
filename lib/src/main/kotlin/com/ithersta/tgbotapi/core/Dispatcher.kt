@@ -20,7 +20,6 @@ import dev.inmo.tgbotapi.types.toChatId
 import dev.inmo.tgbotapi.types.update.abstracts.Update
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -44,7 +43,7 @@ public class Dispatcher(
             if (pendingState.state != null) {
                 (Schedule.exponential<Throwable>(pendingStateDelay) and Schedule.recurs(3)).retryOrElse({
                     val chat = getChat(pendingState.chatId.toChatId())
-                    val getRole = { getRole(UserId(pendingState.chatId)) }
+                    val getRole: suspend () -> Role = { getRole(UserId(pendingState.chatId)) }
                     val stateAccessor = StateAccessor.Changing(
                         snapshot = pendingState.state,
                         new = { handleStateChange(chat, getRole, null, it, ::handleOnNew) },
@@ -65,7 +64,7 @@ public class Dispatcher(
 
     public suspend fun BehaviourContext.handle(update: Update): Unit = with(updateTransformers) {
         val chat = update.toChat() ?: return
-        val getRole = update.toUserId()?.let { { getRole(it) } } ?: return
+        val getRole: suspend () -> Role = update.toUserId()?.let { { getRole(it) } } ?: return
         val chatId = chat.id.chatId
         val (state, messageId) = update.toMessageId()
             ?.let { messageId -> (messageRepository.get(chatId, messageId) ?: MessageState.Empty) to messageId }
@@ -86,14 +85,14 @@ public class Dispatcher(
         handle(context, update.onSuccess(), listOfNotNull(data, action, action?.to(data)))
     }
 
-    private suspend fun BehaviourContext.updateCommands(chatId: ChatIdentifier, getRole: () -> Role) {
+    private suspend fun BehaviourContext.updateCommands(chatId: ChatIdentifier, getRole: suspend () -> Role) {
         val scope = BotCommandScope.Chat(chatId)
         setMyCommands(stateSpecs.flatMap { it.commands(getRole()) }, scope)
     }
 
     private suspend fun <M : MessageId?> BehaviourContext.handleStateChange(
         chat: Chat,
-        getRole: () -> Role,
+        getRole: suspend () -> Role,
         messageId: M,
         state: MessageState,
         handle: suspend (HandlerContextImpl<*, StateAccessor.Changing<*>, *, M>) -> Unit,
