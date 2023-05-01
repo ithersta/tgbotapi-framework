@@ -36,7 +36,9 @@ class Processor(
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
         val declarations = getAllDeclarations(resolver)
-        (declarations + resolver.getClassDeclarationByName("com.ithersta.tgbotapi.basetypes.MessageState.Empty"))
+        (declarations +
+                resolver.getClassDeclarationByName("com.ithersta.tgbotapi.basetypes.MessageState.Empty") +
+                resolver.getClassDeclarationByName("com.ithersta.tgbotapi.pagination.GoToPageAction"))
             .filterIsInstance<KSClassDeclaration>()
             .flatMap { subclasses.keys.map { baseClassName -> baseClassName to it } }
             .filter { (baseClassName, classDeclaration) ->

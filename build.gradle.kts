@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
     alias(libs.plugins.kotlin.jvm) apply false
     `java-library`
@@ -26,6 +28,12 @@ subprojects {
                 version = project.version.toString()
                 from(components["java"])
             }
+        }
+    }
+
+    tasks.withType(KotlinCompile::class.java).configureEach {
+        kotlinOptions {
+            freeCompilerArgs += "-Xcontext-receivers"
         }
     }
 }
