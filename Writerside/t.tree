@@ -6,6 +6,8 @@
                  name="tgbotapi-framework"
                  start-page="states.md">
 
-    <toc-element topic="states.md"/>
-    <toc-element topic="pagination.md"/>
+    <toc-element topic="core.md">
+        <toc-element topic="states.md"/>
+        <toc-element topic="pagination.md"/>
+    </toc-element>
 </instance-profile>

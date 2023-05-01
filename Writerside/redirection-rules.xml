@@ -4,16 +4,4 @@
     <rule id="${ID}">
         <accepts>page.html</accepts>
     </rule>
-    <rule id="10bec32e">
-        <description>Created after removal of "Обзор" from tgbotapi-framework</description>
-        <accepts>overview.html</accepts>
-    </rule>
-    <rule id="64921c0e">
-        <description>Created after removal of "Reference" from tgbotapi-framework</description>
-        <accepts>Reference.html</accepts>
-    </rule>
-    <rule id="56dea723">
-        <description>Created after removal of "How to" from tgbotapi-framework</description>
-        <accepts>How-to.html</accepts>
-    </rule>
 </rules>

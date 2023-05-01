@@ -15,7 +15,7 @@ import dev.inmo.tgbotapi.utils.row
 import kotlinx.serialization.Serializable
 import org.koin.core.annotation.Single
 
-private val numbers = (0..100)
+private val numbers = (1..100)
 
 @Single
 class PaginationFlow : DialogueFlow {
@@ -35,7 +35,7 @@ class PaginationFlow : DialogueFlow {
 
     val samplePagination = inState<Role, SamplePaginationState> {
         render {
-            text = "Пагинация"
+            text = "Числа от 1 до 100"
             keyboard = inlineKeyboard {
                 numbers.drop(offset).take(limit).forEach { number ->
                     row {
