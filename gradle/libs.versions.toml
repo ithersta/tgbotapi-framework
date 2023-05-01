@@ -10,6 +10,7 @@ ksp = "1.8.21-1.0.11"
 kotlinpoet = "1.13.1"
 ktor = "2.3.0"
 arrow = "1.2.0-RC"
+dokka = "1.8.10"
 
 [libraries]
 inmo-tgbotapi = { module = "dev.inmo:tgbotapi", version.ref = "inmo-tgbotapi" }
@@ -31,6 +32,7 @@ kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref =
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 
 [bundles]
 exposed = ["exposed-core", "exposed-jdbc"]

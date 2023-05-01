@@ -15,7 +15,7 @@ env:
   ARTIFACT: webHelpT2-all.zip
 
 jobs:
-  build-job:
+  build-writerside:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -29,17 +29,38 @@ jobs:
           path: artifacts/${{ env.ARTIFACT }}
           retention-days: 7
 
+  build-dokka:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Build Dokka
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: dokkaHtmlMultiModule
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: dokka
+          path: build/dokka
+          retention-days: 7
+
   deploy:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    needs: build-job
+    needs: build-writerside
     runs-on: ubuntu-latest
     steps:
       - name: Download artifact
         uses: actions/download-artifact@v3
         with:
           name: artifact
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: dokka
+          path: dir/dokka
       - name: Unzip artifact
         uses: montudor/action-zip@v1
         with:
