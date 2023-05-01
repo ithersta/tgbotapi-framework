@@ -10,7 +10,7 @@
     </build-profile>
     <footer>
         <link href="https://github.com/ithersta/tgbotapi-framework">GitHub</link>
-        <link href="dokka">API Reference</link>
+        <link href="https://tg.ithersta.com/dokka">API Reference</link>
     </footer>
 
 </buildprofiles>
