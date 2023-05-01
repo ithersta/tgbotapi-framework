@@ -8,5 +8,9 @@
             <noindex-content>true</noindex-content>
         </variables>
     </build-profile>
+    <footer>
+        <link href="https://github.com/ithersta/tgbotapi-framework">GitHub</link>
+        <link href="dokka">API Reference</link>
+    </footer>
 
 </buildprofiles>
