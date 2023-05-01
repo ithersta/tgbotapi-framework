@@ -6,8 +6,10 @@ import com.ithersta.tgbotapi.basetypes.MessageState
 import com.ithersta.tgbotapi.basetypes.Role
 import com.ithersta.tgbotapi.builders.command
 import com.ithersta.tgbotapi.builders.inState
-import com.ithersta.tgbotapi.pagination.Pagination
 import com.ithersta.tgbotapi.pagination.WithPagination
+import com.ithersta.tgbotapi.pagination.limit
+import com.ithersta.tgbotapi.pagination.navigationRow
+import com.ithersta.tgbotapi.pagination.offset
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.inlineKeyboard
 import dev.inmo.tgbotapi.utils.row
 import kotlinx.serialization.Serializable
@@ -32,16 +34,15 @@ class PaginationFlow : DialogueFlow {
     }
 
     val samplePagination = inState<Role, SamplePaginationState> {
-        val pagination = Pagination()
         render {
             text = "Пагинация"
             keyboard = inlineKeyboard {
-                numbers.drop(pagination.offset).take(pagination.limit).forEach { number ->
+                numbers.drop(offset).take(limit).forEach { number ->
                     row {
                         actionButton(number.toString(), SamplePaginationState.SampleAction)
                     }
                 }
-                pagination.navigationRow(itemCount = numbers.count())
+                navigationRow(itemCount = numbers.count())
             }
         }
     }
