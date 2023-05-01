@@ -42,7 +42,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: dokka
-          path: build/dokka
+          path: build/dokka/htmlMultiModule
           retention-days: 7
 
   deploy:
