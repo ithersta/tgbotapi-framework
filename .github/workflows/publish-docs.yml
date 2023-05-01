@@ -49,7 +49,7 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    needs: build-writerside
+    needs: [build-writerside, build-dokka]
     runs-on: ubuntu-latest
     steps:
       - name: Download artifact
