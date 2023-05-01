@@ -8,6 +8,10 @@
 
     <toc-element topic="core.md">
         <toc-element topic="states.md"/>
+        <toc-element topic="actions.md"/>
         <toc-element topic="pagination.md"/>
+    </toc-element>
+    <toc-element topic="samples.md">
+        <toc-element topic="multiple-choice.md"/>
     </toc-element>
 </instance-profile>

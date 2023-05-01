@@ -42,7 +42,6 @@ fun multipleChoice() = inState<DefaultRole, MultipleChoiceState> {
     }
     on<SelectAction> {
         state.edit { copy(selectedClothes = selectedClothes + it.clothes) }
-        state.new(chat.id) { state.snapshot }
     }
     on<UnselectAction> {
         state.edit { copy(selectedClothes = selectedClothes - it.clothes) }

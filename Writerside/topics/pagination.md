@@ -5,6 +5,7 @@
 ## Без пагинации
 
 Создадим состояние и спецификацию.
+
 ```kotlin
 @Serializable
 class SamplePaginationState : MessageState
@@ -29,7 +30,7 @@ val samplePagination = inState<Role, SamplePaginationState> {
 Реализуем пагинацию.
 
 1. Сделаем так, чтобы состояние реализовывало `WithPagination`.
-   
+
     ```kotlin
     @Serializable
     data class SamplePaginationState(
@@ -40,7 +41,7 @@ val samplePagination = inState<Role, SamplePaginationState> {
     ```
 
 2. Изменим спецификацию.
-   
+
    Теперь в блоке `render` доступны инструменты для пагинации:
 
    limit
@@ -52,7 +53,7 @@ val samplePagination = inState<Role, SamplePaginationState> {
    navigationRow(itemCount = …)
    : кнопки назад, вперёд, а также счётчик страниц
 
-   Используем их. 
+   Используем их.
     ```kotlin
     val samplePagination = inState<Role, SamplePaginationState> {
         val numbers = (1..100)
@@ -72,6 +73,7 @@ val samplePagination = inState<Role, SamplePaginationState> {
 
 ### Результат
 
-![Результат](pagination.gif)
+![Результат](pagination.gif){ border-effect="rounded" }
 
+[Полный код](https://github.com/ithersta/tgbotapi-framework/blob/main/sample/src/main/kotlin/com/ithersta/sample/PaginationFlow.kt)
 
