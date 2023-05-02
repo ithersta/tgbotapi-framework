@@ -16,6 +16,12 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 
+/**
+ * [MessageRepository] implementation based on SQLite.
+ * Uses [protoBuf] to serialize states and actions.
+ *
+ * @param jdbc connection string
+ */
 @OptIn(ExperimentalSerializationApi::class)
 public class SqliteMessageRepository(
     private val protoBuf: ProtoBuf,
