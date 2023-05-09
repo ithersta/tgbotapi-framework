@@ -9,7 +9,6 @@ import dev.inmo.tgbotapi.extensions.api.edit.edit
 import dev.inmo.tgbotapi.extensions.api.send.send
 import dev.inmo.tgbotapi.types.BotCommand
 import dev.inmo.tgbotapi.types.MessageId
-import dev.inmo.tgbotapi.types.buttons.ReplyKeyboardRemove
 import dev.inmo.tgbotapi.types.message.abstracts.ChatEventMessage
 import dev.inmo.tgbotapi.types.message.abstracts.ContentMessage
 import dev.inmo.tgbotapi.types.message.abstracts.Message
@@ -39,7 +38,7 @@ public class StateSpecBuilder<R : Role, S : MessageState> @PublishedApi internal
     public fun render(block: suspend PersistedMessageTemplateBuilder<S, R, *>.() -> Unit) {
         _onNew {
             val template = PersistedMessageTemplateBuilder(this).apply { block() }.build()
-            val message = send(chat, template.entities, replyMarkup = template.keyboard ?: ReplyKeyboardRemove())
+            val message = send(chat, template.entities, replyMarkup = template.keyboard)
             state.persist(
                 PersistedMessage(
                     chatId = chat.id.chatId,

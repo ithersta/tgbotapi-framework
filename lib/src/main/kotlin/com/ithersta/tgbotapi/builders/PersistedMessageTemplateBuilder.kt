@@ -3,12 +3,13 @@ package com.ithersta.tgbotapi.builders
 import com.ithersta.tgbotapi.basetypes.Action
 import com.ithersta.tgbotapi.basetypes.MessageState
 import com.ithersta.tgbotapi.basetypes.Role
-import com.ithersta.tgbotapi.core.StateAccessor
 import com.ithersta.tgbotapi.core.HandlerContext
+import com.ithersta.tgbotapi.core.StateAccessor
 import com.ithersta.tgbotapi.persistence.PersistedAction
 import dev.inmo.tgbotapi.extensions.utils.formatting.toMarkdownTexts
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.InlineKeyboardRowBuilder
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.dataButton
+import dev.inmo.tgbotapi.extensions.utils.types.buttons.inlineKeyboard
 import dev.inmo.tgbotapi.types.MessageId
 import dev.inmo.tgbotapi.types.buttons.InlineKeyboardMarkup
 import dev.inmo.tgbotapi.types.message.textsources.TextSource
@@ -18,7 +19,7 @@ import dev.inmo.tgbotapi.utils.regular
 
 internal class MessageTemplate(
     val entities: TextSourcesList,
-    val keyboard: InlineKeyboardMarkup?,
+    val keyboard: InlineKeyboardMarkup,
     val actions: List<PersistedAction>,
 )
 
@@ -32,7 +33,7 @@ public class PersistedMessageTemplateBuilder<S : MessageState, R : Role, M : Mes
         set(value) {
             entities = buildEntities { regular(value) }
         }
-    public var keyboard: InlineKeyboardMarkup? = null
+    public var keyboard: InlineKeyboardMarkup = inlineKeyboard { }
     private val persistedActions = mutableListOf<PersistedAction>()
 
     public fun InlineKeyboardRowBuilder.actionButton(text: String, action: Action) {
