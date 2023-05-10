@@ -7,8 +7,9 @@ import dev.inmo.tgbotapi.types.BotCommand
 import dev.inmo.tgbotapi.types.MessageId
 
 public typealias OnSuccess = suspend TelegramBot.() -> Unit
-public typealias Handler<S, U, M, Data> = suspend HandlerContext<S, StateAccessor.Static<S>, U, M>.(Data) -> Unit
-public typealias StateChangeHandler<S, U, M, Data> = suspend HandlerContext<S, StateAccessor.Changing<S>, U, M>.(Data) -> Unit
+public typealias OnActionHandler<R, S, Data> = suspend OnActionContext<R, S>.(Data) -> Unit
+public typealias OnNewHandler<R, S> = suspend OnNewContext<R, S>.() -> Unit
+public typealias OnEditHandler<R, S> = suspend OnEditContext<R, S>.() -> Unit
 
 /**
  * Describes a state with handlers on different triggers.
@@ -22,15 +23,15 @@ public class StateSpec<R : Role, S : MessageState> internal constructor(
     private val roleMapper: (Role) -> R?,
     private val triggers: List<Trigger<S, R, *>>,
     private val commands: List<BotCommand>,
-    private val _onNewHandler: StateChangeHandler<S, R, Nothing?, Nothing?>?,
-    private val _onEditHandler: StateChangeHandler<S, R, MessageId, Nothing?>?,
+    private val _onNewHandler: OnNewHandler<R, S>?,
+    private val _onEditHandler: OnEditHandler<R, S>?,
 ) {
     private fun HandlerContext<*, *, *, *>.isApplicable() =
         stateMapper(state.snapshot) != null && roleMapper(role) != null
 
     @PublishedApi
     internal class Trigger<S : MessageState, R : Role, Data : Any>(
-        private val handler: Handler<S, R, MessageId, Data>,
+        private val handler: OnActionHandler<R, S, Data>,
         private val mapper: (Any) -> Data?,
     ) {
         suspend fun handle(
@@ -72,7 +73,7 @@ public class StateSpec<R : Role, S : MessageState> internal constructor(
             ?.takeIf { context.isApplicable() }
             ?.let {
                 context.shouldStop = true
-                it.invoke(context as HandlerContext<S, StateAccessor.Changing<S>, R, Nothing?>, null)
+                it.invoke(context as HandlerContext<S, StateAccessor.Changing<S>, R, Nothing?>)
                 context.shouldStop
             } ?: false
 
@@ -82,7 +83,7 @@ public class StateSpec<R : Role, S : MessageState> internal constructor(
             ?.takeIf { context.isApplicable() }
             ?.let {
                 context.shouldStop = true
-                it.invoke(context as HandlerContext<S, StateAccessor.Changing<S>, R, MessageId>, null)
+                it.invoke(context as HandlerContext<S, StateAccessor.Changing<S>, R, MessageId>)
                 context.shouldStop
             } ?: false
 

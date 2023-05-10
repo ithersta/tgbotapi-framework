@@ -6,6 +6,7 @@ import com.ithersta.tgbotapi.basetypes.Action
 import com.ithersta.tgbotapi.basetypes.MessageState
 import com.ithersta.tgbotapi.builders.command
 import com.ithersta.tgbotapi.builders.inState
+import dev.inmo.tgbotapi.extensions.api.send.send
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.inlineKeyboard
 import dev.inmo.tgbotapi.utils.row
 import kotlinx.serialization.Serializable

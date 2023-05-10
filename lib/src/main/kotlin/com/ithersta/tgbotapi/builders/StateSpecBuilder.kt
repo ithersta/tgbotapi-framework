@@ -8,7 +8,6 @@ import dev.inmo.tgbotapi.bot.exceptions.MessageIsNotModifiedException
 import dev.inmo.tgbotapi.extensions.api.edit.edit
 import dev.inmo.tgbotapi.extensions.api.send.send
 import dev.inmo.tgbotapi.types.BotCommand
-import dev.inmo.tgbotapi.types.MessageId
 import dev.inmo.tgbotapi.types.message.abstracts.ChatEventMessage
 import dev.inmo.tgbotapi.types.message.abstracts.ContentMessage
 import dev.inmo.tgbotapi.types.message.abstracts.Message
@@ -17,8 +16,8 @@ import kotlin.reflect.full.isSubtypeOf
 import kotlin.reflect.full.starProjectedType
 import kotlin.reflect.typeOf
 
-public typealias StateChangeHandlerReturningMessage<S, U, M, Data> =
-        suspend HandlerContext<S, StateAccessor.Changing<S>, U, M>.(Data) -> Message
+public typealias OnNewHandlerReturningMessage<R, S> = suspend OnNewContext<R, S>.() -> Message
+public typealias OnEditHandlerReturningMessage<R, S> = suspend OnEditContext<R, S>.() -> Message
 
 @FrameworkDslMarker
 public class StateSpecBuilder<R : Role, S : MessageState> @PublishedApi internal constructor(
@@ -32,8 +31,8 @@ public class StateSpecBuilder<R : Role, S : MessageState> @PublishedApi internal
 
     @PublishedApi
     internal val commands: MutableList<BotCommand> = mutableListOf()
-    private var onNewHandler: StateChangeHandler<S, R, Nothing?, Nothing?>? = null
-    private var onEditHandler: StateChangeHandler<S, R, MessageId, Nothing?>? = null
+    private var onNewHandler: OnNewHandler<R, S>? = null
+    private var onEditHandler: OnEditHandler<R, S>? = null
 
     public fun render(block: suspend PersistedMessageTemplateBuilder<S, R, *>.() -> Unit) {
         _onNew {
@@ -75,36 +74,36 @@ public class StateSpecBuilder<R : Role, S : MessageState> @PublishedApi internal
         }
     }
 
-    private fun _onNew(handler: StateChangeHandler<S, R, Nothing?, Nothing?>) {
+    private fun _onNew(handler: OnNewHandler<R, S>) {
         check(onNewHandler == null) { "Only one onNew block allowed" }
         onNewHandler = handler
     }
 
-    private fun _onEdit(handler: StateChangeHandler<S, R, MessageId, Nothing?>) {
+    private fun _onEdit(handler: OnEditHandler<R, S>) {
         check(onEditHandler == null) { "Only one onEdit block allowed" }
         onEditHandler = handler
     }
 
-    public fun onNewOrEdit(handler: StateChangeHandlerReturningMessage<S, R, *, Nothing?>) {
+    public fun onNewOrEdit(handler: OnNewHandlerReturningMessage<R, S>) {
         onNew(handler)
         onEdit(handler)
     }
 
-    public fun onNew(handler: StateChangeHandlerReturningMessage<S, R, Nothing?, Nothing?>) {
+    public fun onNew(handler: OnNewHandlerReturningMessage<R, S>) {
         _onNew {
-            val message = handler(null)
+            val message = handler()
             state.persist(PersistedMessage(chat.id.chatId, message.messageId, state.snapshot, handleGlobalUpdates))
         }
     }
 
-    public fun onEdit(handler: StateChangeHandlerReturningMessage<S, R, MessageId, Nothing?>) {
+    public fun onEdit(handler: OnEditHandlerReturningMessage<R, S>) {
         _onEdit {
-            val message = handler(null)
+            val message = handler()
             state.persist(PersistedMessage(chat.id.chatId, message.messageId, state.snapshot, handleGlobalUpdates))
         }
     }
 
-    public inline fun <reified Data : Any> on(noinline handler: Handler<S, R, MessageId, Data>) {
+    public inline fun <reified Data : Any> on(noinline handler: OnActionHandler<R, S, Data>) {
         triggers.add(
             StateSpec.Trigger(handler) { data ->
                 runCatching {
@@ -188,7 +187,7 @@ public inline fun <reified R : Role> command(
     text: String,
     description: String?,
     priority: Int = 100,
-    crossinline handler: Handler<MessageState, R, MessageId, TextMessage>,
+    crossinline handler: OnActionHandler<R, MessageState, TextMessage>,
 ): StateSpec<R, MessageState> = inState<R, MessageState>(priority) {
     require(text.startsWith("/").not()) { "Command must not start with '/'" }
     val trigger = "/$text"
