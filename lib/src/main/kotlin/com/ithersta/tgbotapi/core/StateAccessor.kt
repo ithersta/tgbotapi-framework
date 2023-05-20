@@ -47,9 +47,11 @@ public sealed class StateAccessor<out S : MessageState> private constructor(
         snapshot: S,
         new: suspend (MessageState) -> Unit,
         edit: suspend (MessageState) -> Unit,
+        delete: suspend () -> Unit,
         unboundStateAccessor: UnboundStateAccessor,
     ) : StateAccessor<S>(snapshot, new, unboundStateAccessor) {
         private val _edit = edit
+        private val _delete = delete
 
         /**
          * Edits the current message using the specified state.
@@ -57,6 +59,11 @@ public sealed class StateAccessor<out S : MessageState> private constructor(
          * @param map transform current state into the new one.
          */
         public suspend fun edit(map: S.() -> MessageState): Unit = _edit(map(snapshot))
+
+        /**
+         * Deletes the current message with its state
+         */
+        public suspend fun delete(): Unit = _delete()
     }
 
     public class Changing<out S : MessageState> internal constructor(

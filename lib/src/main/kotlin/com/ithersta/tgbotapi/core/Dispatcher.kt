@@ -10,6 +10,7 @@ import com.ithersta.tgbotapi.persistence.PendingState
 import dev.inmo.tgbotapi.bot.TelegramBot
 import dev.inmo.tgbotapi.extensions.api.bot.setMyCommands
 import dev.inmo.tgbotapi.extensions.api.chat.get.getChat
+import dev.inmo.tgbotapi.extensions.api.delete
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
 import dev.inmo.tgbotapi.types.ChatIdentifier
 import dev.inmo.tgbotapi.types.MessageId
@@ -76,6 +77,10 @@ public class Dispatcher(
         val stateAccessor = StateAccessor.Static(
             snapshot = state,
             edit = { handleStateChange(chat, getRole, messageId, it, ::handleOnEdit) },
+            delete = {
+                messageRepository.delete(chatId, messageId)
+                delete(chat, messageId)
+            },
             new = { handleStateChange(chat, getRole, null, it, ::handleOnNew) },
             unboundStateAccessor = unboundStateAccessor
         )

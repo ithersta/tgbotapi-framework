@@ -66,6 +66,15 @@ public class SqliteMessageRepository(
         protoBuf.decodeFromByteArray<MessageState>(this)
     }?.getOrNull()
 
+    override fun delete(chatId: Long, messageId: Long): Unit = transaction(db) {
+        PersistedActions.deleteWhere {
+            (PersistedActions.chatId eq chatId) and (PersistedActions.messageId eq messageId)
+        }
+        PersistedMessages.deleteWhere {
+            (PersistedMessages.chatId eq chatId) and (PersistedMessages.messageId eq messageId)
+        }
+    }
+
     override fun getLast(chatId: Long): Pair<MessageState, MessageId>? = transaction(db) {
         PersistedMessages
             .slice(PersistedMessages.state, PersistedMessages.messageId)
