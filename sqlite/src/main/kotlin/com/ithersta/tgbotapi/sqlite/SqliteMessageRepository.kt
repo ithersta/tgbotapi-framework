@@ -14,6 +14,7 @@ import kotlinx.serialization.encodeToByteArray
 import kotlinx.serialization.protobuf.ProtoBuf
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.transactions.transaction
 
 /**
@@ -21,11 +22,13 @@ import org.jetbrains.exposed.sql.transactions.transaction
  * Uses [protoBuf] to serialize states and actions.
  *
  * @param jdbc connection string
+ * @param historyDepth amount of messages to keep
  */
 @OptIn(ExperimentalSerializationApi::class)
 public class SqliteMessageRepository(
     private val protoBuf: ProtoBuf,
     jdbc: String = "jdbc:sqlite:states.db",
+    private val historyDepth: Int = 200,
 ) : MessageRepository {
     private val pendingUpdates = MutableSharedFlow<Unit>()
 
@@ -54,6 +57,7 @@ public class SqliteMessageRepository(
                 this[PersistedActions.key] = key
                 this[PersistedActions.action] = action
             }
+            cleanup(chatId = message.chatId, lastMessageId = message.messageId)
         }
     }
 
@@ -139,5 +143,15 @@ public class SqliteMessageRepository(
 
     private fun deletePending(id: Long): Unit = transaction(db) {
         PendingStateUpdates.deleteWhere { PendingStateUpdates.id eq id }
+    }
+
+    private fun Transaction.cleanup(chatId: Long, lastMessageId: Long) {
+        val lastKeptMessageId = lastMessageId - historyDepth
+        PersistedActions.deleteWhere {
+            (PersistedActions.chatId eq chatId) and (messageId less lastKeptMessageId)
+        }
+        PersistedMessages.deleteWhere {
+            (PersistedMessages.chatId eq chatId) and (messageId less lastKeptMessageId)
+        }
     }
 }
