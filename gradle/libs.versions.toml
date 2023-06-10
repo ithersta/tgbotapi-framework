@@ -2,7 +2,7 @@
 kotlin = "1.8.21"
 inmo-tgbotapi = "7.1.3"
 koin = "3.4.2"
-koin-annotations = "1.2.0"
+koin-annotations = "1.2.2"
 kotlinx-serialization = "1.5.1"
 exposed = "0.41.1"
 xerial-sqlite = "3.42.0.0"
