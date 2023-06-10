@@ -9,6 +9,10 @@ on:
 permissions:
   id-token: write
   pages: write
+  
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   PRODUCT: Writerside/t
