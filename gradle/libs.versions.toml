@@ -10,7 +10,7 @@ ksp = "1.8.21-1.0.11"
 kotlinpoet = "1.14.2"
 ktor = "2.3.1"
 arrow = "1.2.0-RC"
-dokka = "1.8.10"
+dokka = "1.8.20"
 
 [libraries]
 inmo-tgbotapi = { module = "dev.inmo:tgbotapi", version.ref = "inmo-tgbotapi" }
