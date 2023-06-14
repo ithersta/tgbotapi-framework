@@ -17,6 +17,7 @@ import dev.inmo.tgbotapi.types.MessageId
 import dev.inmo.tgbotapi.types.UserId
 import dev.inmo.tgbotapi.types.chat.Chat
 import dev.inmo.tgbotapi.types.commands.BotCommandScope
+import dev.inmo.tgbotapi.types.message.abstracts.Message
 import dev.inmo.tgbotapi.types.toChatId
 import dev.inmo.tgbotapi.types.update.abstracts.Update
 import kotlinx.coroutines.Job
@@ -100,8 +101,8 @@ public class Dispatcher(
         getRole: suspend () -> Role,
         messageId: M,
         state: MessageState,
-        handle: suspend (HandlerContextImpl<*, StateAccessor.Changing<*>, *, M>) -> Unit,
-    ) {
+        handle: suspend (HandlerContextImpl<*, StateAccessor.Changing<*>, *, M>) -> Message?,
+    ): Message? {
         val stateAccessor = StateAccessor.Changing(
             snapshot = state,
             new = { handleStateChange(chat, getRole, null, it, ::handleOnNew) },
@@ -111,7 +112,7 @@ public class Dispatcher(
         val context = HandlerContextImpl(bot, stateAccessor, chat, messageId, getRole()) {
             updateCommands(chat.id, getRole)
         }
-        handle(context)
+        return handle(context)
     }
 
     private suspend fun handle(
@@ -121,10 +122,10 @@ public class Dispatcher(
     ) = stateSpecs.any { it.handle(context, onSuccess, data) }
 
     private suspend fun handleOnEdit(context: HandlerContextImpl<*, StateAccessor.Changing<*>, *, MessageId>) =
-        stateSpecs.any { it.handleOnEdit(context) }
+        stateSpecs.firstNotNullOfOrNull { it.handleOnEdit(context) }
 
     private suspend fun handleOnNew(context: HandlerContextImpl<*, StateAccessor.Changing<*>, *, Nothing?>) =
-        stateSpecs.any { it.handleOnNew(context) }
+        stateSpecs.firstNotNullOfOrNull { it.handleOnNew(context) }
 
     public interface UpdateTransformers {
         public fun Update.toData(): Any

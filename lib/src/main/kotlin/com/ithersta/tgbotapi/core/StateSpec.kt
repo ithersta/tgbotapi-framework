@@ -5,11 +5,12 @@ import com.ithersta.tgbotapi.basetypes.Role
 import dev.inmo.tgbotapi.bot.TelegramBot
 import dev.inmo.tgbotapi.types.BotCommand
 import dev.inmo.tgbotapi.types.MessageId
+import dev.inmo.tgbotapi.types.message.abstracts.Message
 
 public typealias OnSuccess = suspend TelegramBot.() -> Unit
 public typealias OnActionHandler<R, S, Data> = suspend OnActionContext<R, S>.(Data) -> Unit
-public typealias OnNewHandler<R, S> = suspend OnNewContext<R, S>.() -> Unit
-public typealias OnEditHandler<R, S> = suspend OnEditContext<R, S>.() -> Unit
+public typealias OnNewHandler<R, S> = suspend OnNewContext<R, S>.() -> Message
+public typealias OnEditHandler<R, S> = suspend OnEditContext<R, S>.() -> Message
 
 /**
  * Describes a state with handlers on different triggers.
@@ -68,24 +69,24 @@ public class StateSpec<R : Role, S : MessageState> internal constructor(
     }
 
     @Suppress("UNCHECKED_CAST")
-    internal suspend fun handleOnNew(context: HandlerContextImpl<*, StateAccessor.Changing<*>, *, Nothing?>): Boolean =
+    internal suspend fun handleOnNew(context: HandlerContextImpl<*, StateAccessor.Changing<*>, *, Nothing?>): Message? =
         _onNewHandler
             ?.takeIf { context.isApplicable() }
             ?.let {
                 context.shouldStop = true
                 it.invoke(context as HandlerContext<S, StateAccessor.Changing<S>, R, Nothing?>)
-                context.shouldStop
-            } ?: false
+                    .takeIf { context.shouldStop }
+            }
 
     @Suppress("UNCHECKED_CAST")
-    internal suspend fun handleOnEdit(context: HandlerContextImpl<*, StateAccessor.Changing<*>, *, MessageId>): Boolean =
+    internal suspend fun handleOnEdit(context: HandlerContextImpl<*, StateAccessor.Changing<*>, *, MessageId>): Message? =
         _onEditHandler
             ?.takeIf { context.isApplicable() }
             ?.let {
                 context.shouldStop = true
                 it.invoke(context as HandlerContext<S, StateAccessor.Changing<S>, R, MessageId>)
-                context.shouldStop
-            } ?: false
+                    .takeIf { context.shouldStop }
+            }
 
     internal fun commands(role: Role): List<BotCommand> = roleMapper(role)?.let { commands } ?: emptyList()
 }

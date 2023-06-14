@@ -8,10 +8,13 @@ import dev.inmo.tgbotapi.bot.exceptions.MessageIsNotModifiedException
 import dev.inmo.tgbotapi.extensions.api.edit.edit
 import dev.inmo.tgbotapi.extensions.api.send.send
 import dev.inmo.tgbotapi.types.BotCommand
+import dev.inmo.tgbotapi.types.MessageId
+import dev.inmo.tgbotapi.types.chat.Chat
 import dev.inmo.tgbotapi.types.message.abstracts.ChatEventMessage
 import dev.inmo.tgbotapi.types.message.abstracts.ContentMessage
 import dev.inmo.tgbotapi.types.message.abstracts.Message
 import dev.inmo.tgbotapi.types.message.content.TextMessage
+import korlibs.time.DateTime
 import kotlin.reflect.full.isSubtypeOf
 import kotlin.reflect.full.starProjectedType
 import kotlin.reflect.typeOf
@@ -47,10 +50,11 @@ public class StateSpecBuilder<R : Role, S : MessageState> @PublishedApi internal
                     actions = template.actions,
                 ),
             )
+            message
         }
         _onEdit {
             val template = PersistedMessageTemplateBuilder(this).apply { block() }.build()
-            runCatching {
+            val message = runCatching {
                 edit(
                     chatId = chat.id,
                     messageId = messageId,
@@ -61,7 +65,7 @@ public class StateSpecBuilder<R : Role, S : MessageState> @PublishedApi internal
                 if (exception !is MessageIsNotModifiedException) {
                     throw exception
                 }
-            }
+            }.getOrNull()
             state.persist(
                 PersistedMessage(
                     chatId = chat.id.chatId,
@@ -71,6 +75,11 @@ public class StateSpecBuilder<R : Role, S : MessageState> @PublishedApi internal
                     actions = template.actions,
                 ),
             )
+            message ?: object : Message {
+                override val chat = this@_onEdit.chat
+                override val date = DateTime.now()
+                override val messageId = this@_onEdit.messageId
+            }
         }
     }
 
@@ -91,15 +100,17 @@ public class StateSpecBuilder<R : Role, S : MessageState> @PublishedApi internal
 
     public fun onNew(handler: OnNewHandlerReturningMessage<R, S>) {
         _onNew {
-            val message = handler()
-            state.persist(PersistedMessage(chat.id.chatId, message.messageId, state.snapshot, handleGlobalUpdates))
+            handler().also {
+                state.persist(PersistedMessage(chat.id.chatId, it.messageId, state.snapshot, handleGlobalUpdates))
+            }
         }
     }
 
     public fun onEdit(handler: OnEditHandlerReturningMessage<R, S>) {
         _onEdit {
-            val message = handler()
-            state.persist(PersistedMessage(chat.id.chatId, message.messageId, state.snapshot, handleGlobalUpdates))
+            handler().also {
+                state.persist(PersistedMessage(chat.id.chatId, it.messageId, state.snapshot, handleGlobalUpdates))
+            }
         }
     }
 
