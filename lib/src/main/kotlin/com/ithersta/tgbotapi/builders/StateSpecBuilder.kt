@@ -2,14 +2,15 @@ package com.ithersta.tgbotapi.builders
 
 import com.ithersta.tgbotapi.basetypes.MessageState
 import com.ithersta.tgbotapi.basetypes.Role
-import com.ithersta.tgbotapi.core.*
+import com.ithersta.tgbotapi.core.OnActionHandler
+import com.ithersta.tgbotapi.core.OnEditHandler
+import com.ithersta.tgbotapi.core.OnNewHandler
+import com.ithersta.tgbotapi.core.StateSpec
 import com.ithersta.tgbotapi.persistence.PersistedMessage
 import dev.inmo.tgbotapi.bot.exceptions.MessageIsNotModifiedException
 import dev.inmo.tgbotapi.extensions.api.edit.edit
 import dev.inmo.tgbotapi.extensions.api.send.send
 import dev.inmo.tgbotapi.types.BotCommand
-import dev.inmo.tgbotapi.types.MessageId
-import dev.inmo.tgbotapi.types.chat.Chat
 import dev.inmo.tgbotapi.types.message.abstracts.ChatEventMessage
 import dev.inmo.tgbotapi.types.message.abstracts.ContentMessage
 import dev.inmo.tgbotapi.types.message.abstracts.Message
@@ -18,9 +19,6 @@ import korlibs.time.DateTime
 import kotlin.reflect.full.isSubtypeOf
 import kotlin.reflect.full.starProjectedType
 import kotlin.reflect.typeOf
-
-public typealias OnNewHandlerReturningMessage<R, S> = suspend OnNewContext<R, S>.() -> Message
-public typealias OnEditHandlerReturningMessage<R, S> = suspend OnEditContext<R, S>.() -> Message
 
 @FrameworkDslMarker
 public class StateSpecBuilder<R : Role, S : MessageState> @PublishedApi internal constructor(
@@ -93,12 +91,12 @@ public class StateSpecBuilder<R : Role, S : MessageState> @PublishedApi internal
         onEditHandler = handler
     }
 
-    public fun onNewOrEdit(handler: OnNewHandlerReturningMessage<R, S>) {
+    public fun onNewOrEdit(handler: OnNewHandler<R, S>) {
         onNew(handler)
         onEdit(handler)
     }
 
-    public fun onNew(handler: OnNewHandlerReturningMessage<R, S>) {
+    public fun onNew(handler: OnNewHandler<R, S>) {
         _onNew {
             handler().also {
                 state.persist(PersistedMessage(chat.id.chatId, it.messageId, state.snapshot, handleGlobalUpdates))
@@ -106,7 +104,7 @@ public class StateSpecBuilder<R : Role, S : MessageState> @PublishedApi internal
         }
     }
 
-    public fun onEdit(handler: OnEditHandlerReturningMessage<R, S>) {
+    public fun onEdit(handler: OnEditHandler<R, S>) {
         _onEdit {
             handler().also {
                 state.persist(PersistedMessage(chat.id.chatId, it.messageId, state.snapshot, handleGlobalUpdates))
