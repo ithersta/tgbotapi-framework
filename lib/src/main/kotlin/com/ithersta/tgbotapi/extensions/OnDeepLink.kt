@@ -9,7 +9,7 @@ import dev.inmo.tgbotapi.types.message.textsources.BotCommandTextSource
 import dev.inmo.tgbotapi.types.message.textsources.RegularTextSource
 import io.ktor.http.*
 
-public inline fun <R : Role, S : MessageState> StateSpecBuilder<R, S>.onDeeplink(
+public inline fun <R : Role, S : MessageState> StateSpecBuilder<R, S>.onDeepLink(
     crossinline handler: OnActionHandler<R, S, String>
 ): Unit = on<TextMessage> { message ->
     runCatching {
