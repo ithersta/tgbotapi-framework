@@ -81,6 +81,10 @@ public sealed class StateAccessor<out S : MessageState> private constructor(
          *
          * @param message data that will be persisted.
          */
-        public fun persist(message: PersistedMessage): Unit = _persist(message)
+        public fun persist(message: PersistedMessage) {
+            if (message.handleGlobalUpdates || message.actions.isNotEmpty()) {
+                _persist(message)
+            }
+        }
     }
 }
