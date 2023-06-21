@@ -5,6 +5,7 @@ import com.ithersta.sample.MultipleChoiceState.UnselectAction
 import com.ithersta.tgbotapi.basetypes.Action
 import com.ithersta.tgbotapi.basetypes.MessageState
 import com.ithersta.tgbotapi.builders.command
+import com.ithersta.tgbotapi.builders.fromResources
 import com.ithersta.tgbotapi.builders.inState
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.inlineKeyboard
 import dev.inmo.tgbotapi.utils.row
@@ -28,6 +29,7 @@ data class MultipleChoiceState(
 fun multipleChoice() = inState<DefaultRole, MultipleChoiceState> {
     render {
         text = "Что наденем?"
+        photo = fromResources("/a.jpg")
         keyboard = inlineKeyboard {
             Clothes.values().forEach { clothes ->
                 row {

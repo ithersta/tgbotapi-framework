@@ -8,14 +8,20 @@ import com.ithersta.tgbotapi.core.OnEditHandler
 import com.ithersta.tgbotapi.core.OnNewHandler
 import com.ithersta.tgbotapi.core.StateSpec
 import com.ithersta.tgbotapi.persistence.PersistedMessage
+import dev.inmo.tgbotapi.bot.TelegramBot
 import dev.inmo.tgbotapi.bot.exceptions.MessageIsNotModifiedException
 import dev.inmo.tgbotapi.extensions.api.edit.edit
+import dev.inmo.tgbotapi.extensions.api.send.media.sendPhoto
 import dev.inmo.tgbotapi.extensions.api.send.send
 import dev.inmo.tgbotapi.types.BotCommand
+import dev.inmo.tgbotapi.types.files.Photo
+import dev.inmo.tgbotapi.types.media.TelegramMediaPhoto
 import dev.inmo.tgbotapi.types.message.abstracts.ChatEventMessage
 import dev.inmo.tgbotapi.types.message.abstracts.ContentMessage
 import dev.inmo.tgbotapi.types.message.abstracts.Message
+import dev.inmo.tgbotapi.types.message.content.MessageContent
 import dev.inmo.tgbotapi.types.message.content.TextMessage
+import dev.inmo.tgbotapi.types.message.content.TextedContent
 import korlibs.time.DateTime
 import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.full.isSubtypeOf
@@ -44,7 +50,7 @@ public class StateSpecBuilder<R : Role, S : MessageState> @PublishedApi internal
     public fun render(block: suspend PersistedMessageTemplateBuilder<S, R, *>.() -> Unit) {
         _onNew {
             val template = PersistedMessageTemplateBuilder(this).apply { block() }.build()
-            val message = send(chat, template.entities, replyMarkup = template.keyboard)
+            val message = send(chat, template)
             state.persist(
                 PersistedMessage(
                     chatId = chat.id.chatId,
@@ -58,18 +64,7 @@ public class StateSpecBuilder<R : Role, S : MessageState> @PublishedApi internal
         }
         _onEdit {
             val template = PersistedMessageTemplateBuilder(this).apply { block() }.build()
-            val message = runCatching {
-                edit(
-                    chatId = chat.id,
-                    messageId = messageId,
-                    entities = template.entities,
-                    replyMarkup = template.keyboard,
-                )
-            }.onFailure { exception ->
-                if (exception !is MessageIsNotModifiedException) {
-                    throw exception
-                }
-            }.getOrNull()
+            val message = edit(chat, messageId, template)
             state.persist(
                 PersistedMessage(
                     chatId = chat.id.chatId,
@@ -79,11 +74,7 @@ public class StateSpecBuilder<R : Role, S : MessageState> @PublishedApi internal
                     actions = template.actions,
                 ),
             )
-            message ?: object : Message {
-                override val chat = this@_onEdit.chat
-                override val date = DateTime.now()
-                override val messageId = this@_onEdit.messageId
-            }
+            message
         }
     }
 
