@@ -31,10 +31,6 @@ object DefaultUpdateTransformers : Dispatcher.UpdateTransformers {
 
     override fun Update.onSuccess(): (suspend TelegramBot.() -> Unit)? =
         callbackQueryUpdateOrNull()?.data?.let { query ->
-            {
-                runBlocking {
-                    answer(query)
-                }
-            }
+            { answer(query) }
         }
 }
