@@ -25,7 +25,7 @@ public abstract class DialogueFlow {
      * @param handleGlobalUpdates if set to true, this spec
      * will handle updates that are not bound to the message (like `on<TextMessage>`)
      */
-    protected inline fun <reified R : Role, reified S : MessageState> inState(
+    public inline fun <reified R : Role, reified S : MessageState> inState(
         priority: Int = 0,
         handleGlobalUpdates: Boolean = true,
         block: StateSpecBuilder<R, S>.() -> Unit,
@@ -49,7 +49,7 @@ public abstract class DialogueFlow {
      * @param priority the priority of this spec, a spec with
      * a bigger priority is called first.
      */
-    protected inline fun <reified R : Role> command(
+    public inline fun <reified R : Role> command(
         text: String,
         description: String?,
         priority: Int = 100,
