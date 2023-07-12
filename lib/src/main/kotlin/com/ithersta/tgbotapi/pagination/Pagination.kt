@@ -1,9 +1,7 @@
 package com.ithersta.tgbotapi.pagination
 
 import com.ithersta.tgbotapi.basetypes.MessageState
-import com.ithersta.tgbotapi.basetypes.Role
 import com.ithersta.tgbotapi.builders.PersistedMessageTemplateBuilder
-import com.ithersta.tgbotapi.builders.inState
 import com.ithersta.tgbotapi.core.HandlerContext
 import com.ithersta.tgbotapi.core.StateAccessor
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.InlineKeyboardBuilder
@@ -36,11 +34,5 @@ public fun <S> PersistedMessageTemplateBuilder<S, *, *>.navigationRow(
         actionButton(if (page > 0) previous else " ", goToPage(page - 1))
         actionButton("${page + 1}/${maxPage + 1}", goToPage(page))
         actionButton(if (page < maxPage) next else " ", goToPage(page + 1))
-    }
-}
-
-internal val withPaginationSpec = inState<Role, WithPagination<*>> {
-    on<GoToPageAction> {
-        state.edit { state.snapshot.withPage(it.page) }
     }
 }

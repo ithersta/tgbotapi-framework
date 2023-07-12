@@ -1,5 +1,6 @@
 package com.ithersta.tgbotapi.autoconfigure
 
+import com.ithersta.tgbotapi.builders.DialogueFlow
 import com.ithersta.tgbotapi.core.Dispatcher
 import com.ithersta.tgbotapi.core.GetRole
 import com.ithersta.tgbotapi.core.StateSpec
@@ -18,19 +19,11 @@ import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.protobuf.ProtoBuf
 import org.koin.core.KoinApplication
 import java.io.File
-import kotlin.reflect.full.declaredMemberProperties
-import kotlin.reflect.full.isSubtypeOf
-import kotlin.reflect.full.starProjectedType
 
 suspend fun KoinApplication.autoconfigure(serializersModule: SerializersModule) {
     val messageRepository = koin.getOrNull<MessageRepository>() ?: defaultMessageRepository(serializersModule)
     val getRole = koin.get<GetRole>()
-    val dialogueFlows = koin.getAll<DialogueFlow>()
-    val stateSpecs = koin.getAll<StateSpec<*, *>>() + dialogueFlows.flatMap { flow ->
-        flow::class.declaredMemberProperties
-            .filter { it.returnType.isSubtypeOf(StateSpec::class.starProjectedType) }
-            .map { it.getter.call(flow) as StateSpec<*, *> }
-    }
+    val stateSpecs = koin.getAll<DialogueFlow>().flatMap { it.stateSpecs }
     val telegramBot = koin.getOrNull<TelegramBot>() ?: defaultTelegramBot()
     val runners = koin.getAll<StatefulRunner>()
     val updateTransformers = koin.getOrNull<Dispatcher.UpdateTransformers>() ?: DefaultUpdateTransformers

@@ -11,7 +11,6 @@ dependencies {
     api(libs.koin.core)
     implementation(project(":sqlite"))
     implementation(libs.ktor.client.okhttp)
-    implementation(libs.kotlin.reflect)
 }
 
 tasks.getByName<Test>("test") {

@@ -1,5 +1,5 @@
 package com.ithersta.tgbotapi.core
 
-import com.ithersta.tgbotapi.pagination.withPaginationSpec
+import com.ithersta.tgbotapi.pagination.WithPaginationFlow
 
-internal val builtInStateSpecs: List<StateSpec<*, *>> = listOf(withPaginationSpec)
+internal val builtInStateSpecs: List<StateSpec<*, *>> = WithPaginationFlow().stateSpecs

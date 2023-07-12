@@ -11,7 +11,7 @@ DialogueFlow позволяет боту автоматически находи
 
 ```kotlin
 @Single
-class SampleFlow : DialogueFlow {
+class SampleFlow : DialogueFlow() {
     val command = command<Role>("sample", "Пример") {
         state.new { SomeState(…) }
     }

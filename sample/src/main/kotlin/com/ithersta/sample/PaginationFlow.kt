@@ -1,11 +1,9 @@
 package com.ithersta.sample
 
-import com.ithersta.tgbotapi.autoconfigure.DialogueFlow
 import com.ithersta.tgbotapi.basetypes.Action
 import com.ithersta.tgbotapi.basetypes.MessageState
 import com.ithersta.tgbotapi.basetypes.Role
-import com.ithersta.tgbotapi.builders.command
-import com.ithersta.tgbotapi.builders.inState
+import com.ithersta.tgbotapi.builders.DialogueFlow
 import com.ithersta.tgbotapi.pagination.WithPagination
 import com.ithersta.tgbotapi.pagination.limit
 import com.ithersta.tgbotapi.pagination.navigationRow
@@ -18,7 +16,7 @@ import org.koin.core.annotation.Single
 private val numbers = (1..100)
 
 @Single
-class PaginationFlow : DialogueFlow {
+class PaginationFlow : DialogueFlow() {
     val command = command<Role>("pagination", description = "Пагинация") {
         state.new { SamplePaginationState(0) }
     }
