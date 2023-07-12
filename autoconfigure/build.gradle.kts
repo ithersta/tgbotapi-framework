@@ -10,6 +10,7 @@ dependencies {
     api(project(":lib"))
     api(libs.koin.core)
     implementation(project(":sqlite"))
+    implementation(libs.ktor.client.okhttp)
     implementation(libs.kotlin.reflect)
 }
 

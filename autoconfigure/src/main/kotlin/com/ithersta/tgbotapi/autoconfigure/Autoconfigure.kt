@@ -11,6 +11,8 @@ import dev.inmo.tgbotapi.bot.TelegramBot
 import dev.inmo.tgbotapi.bot.ktor.telegramBot
 import dev.inmo.tgbotapi.bot.settings.limiters.CommonLimiter
 import dev.inmo.tgbotapi.extensions.behaviour_builder.buildBehaviourWithLongPolling
+import io.ktor.client.*
+import io.ktor.client.engine.okhttp.*
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.protobuf.ProtoBuf
@@ -55,4 +57,5 @@ private fun defaultTelegramBot() = telegramBot(
     token = System.getenv()["TOKEN_FILE"]?.let { File(it).readText() } ?: System.getenv("TOKEN"),
 ) {
     requestsLimiter = CommonLimiter(lockCount = 30, regenTime = 1000)
+    client = HttpClient(OkHttp)
 }
