@@ -1,4 +1,3 @@
-import com.google.devtools.ksp.getClassDeclarationByName
 import com.google.devtools.ksp.processing.*
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
@@ -35,10 +34,7 @@ class Processor(
     }
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
-        val declarations = getAllDeclarations(resolver)
-        (declarations +
-                resolver.getClassDeclarationByName("com.ithersta.tgbotapi.basetypes.MessageState.Empty") +
-                resolver.getClassDeclarationByName("com.ithersta.tgbotapi.pagination.GoToPageAction"))
+        getAllDeclarations(resolver)
             .filterIsInstance<KSClassDeclaration>()
             .flatMap { subclasses.keys.map { baseClassName -> baseClassName to it } }
             .filter { (baseClassName, classDeclaration) ->

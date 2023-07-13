@@ -16,7 +16,7 @@ import dev.inmo.tgbotapi.utils.PreviewFeature
 import kotlinx.coroutines.runBlocking
 
 @OptIn(PreviewFeature::class)
-object DefaultUpdateTransformers : Dispatcher.UpdateTransformers {
+internal object DefaultUpdateTransformers : Dispatcher.UpdateTransformers {
     override fun Update.toData(): Any = data
     override fun Update.toChat(): Chat? = sourceChat()
 

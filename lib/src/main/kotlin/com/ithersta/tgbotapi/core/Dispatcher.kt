@@ -31,9 +31,9 @@ public class Dispatcher(
     private val messageRepository: MessageRepository,
     private val updateTransformers: UpdateTransformers,
     private val getRole: GetRole,
-    private val pendingStateDelay: Duration = 0.2.seconds
+    private val pendingStateDelay: Duration = 0.2.seconds,
 ) {
-    private val stateSpecs = (builtInStateSpecs + stateSpecs).sortedByDescending { it.priority }
+    private val stateSpecs = stateSpecs.sortedByDescending { it.priority }
     private val unboundStateAccessor: UnboundStateAccessor =
         UnboundStateAccessorImpl { chatId, state -> messageRepository.save(PendingState.New(chatId.chatId, state)) }
     public val BehaviourContext.statefulRunnerContext: StatefulRunnerContext

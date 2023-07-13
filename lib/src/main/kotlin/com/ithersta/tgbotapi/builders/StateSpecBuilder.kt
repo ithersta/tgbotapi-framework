@@ -41,8 +41,7 @@ public class StateSpecBuilder<R : Role, S : MessageState> @PublishedApi internal
     @PublishedApi
     internal var hasNonActionTrigger: Boolean = false
 
-    @PublishedApi
-    internal val commands: MutableList<BotCommand> = mutableListOf()
+    public val commands: MutableList<BotCommand> = mutableListOf()
     private var onNewHandler: OnNewHandler<R, S>? = null
     private var onEditHandler: OnEditHandler<R, S>? = null
     private val handleGlobalUpdates get() = preferredHandleGlobalUpdates && hasNonActionTrigger
@@ -160,3 +159,24 @@ public class StateSpecBuilder<R : Role, S : MessageState> @PublishedApi internal
         commands = commands,
     )
 }
+
+/**
+ * Constructs [StateSpec].
+ *
+ * @param R the type of user role this spec applies for.
+ * @param S the type of message state this spec applies for.
+ * @param priority the priority of this spec, a spec with
+ * a bigger priority is called first.
+ * @param handleGlobalUpdates if set to true, this spec
+ * will handle updates that are not bound to the message (like `on<TextMessage>`)
+ */
+public inline fun <reified R : Role, reified S : MessageState> StateSpec(
+    priority: Int = 0,
+    handleGlobalUpdates: Boolean = true,
+    block: StateSpecBuilder<R, S>.() -> Unit,
+): StateSpec<R, S> = StateSpecBuilder(
+    priority,
+    stateMapper = { it as? S },
+    roleMapper = { it as? R },
+    handleGlobalUpdates,
+).apply(block).build()

@@ -2,9 +2,9 @@ package com.ithersta.sample
 
 import com.ithersta.sample.MultipleChoiceFlow.MultipleChoiceState.SelectAction
 import com.ithersta.sample.MultipleChoiceFlow.MultipleChoiceState.UnselectAction
+import com.ithersta.tgbotapi.autoconfigure.DialogueFlow
 import com.ithersta.tgbotapi.basetypes.Action
 import com.ithersta.tgbotapi.basetypes.MessageState
-import com.ithersta.tgbotapi.builders.DialogueFlow
 import com.ithersta.tgbotapi.builders.fromResources
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.inlineKeyboard
 import dev.inmo.tgbotapi.utils.row

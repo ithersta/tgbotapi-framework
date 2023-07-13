@@ -1,13 +1,13 @@
 package com.ithersta.sample
 
+import com.ithersta.tgbotapi.autoconfigure.DialogueFlow
 import com.ithersta.tgbotapi.basetypes.Action
 import com.ithersta.tgbotapi.basetypes.MessageState
 import com.ithersta.tgbotapi.basetypes.Role
-import com.ithersta.tgbotapi.builders.DialogueFlow
-import com.ithersta.tgbotapi.pagination.WithPagination
-import com.ithersta.tgbotapi.pagination.limit
-import com.ithersta.tgbotapi.pagination.navigationRow
-import com.ithersta.tgbotapi.pagination.offset
+import com.ithersta.tgbotapi.init.plugins.WithPagination
+import com.ithersta.tgbotapi.init.plugins.limit
+import com.ithersta.tgbotapi.init.plugins.navigationRow
+import com.ithersta.tgbotapi.init.plugins.offset
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.inlineKeyboard
 import dev.inmo.tgbotapi.utils.row
 import kotlinx.serialization.Serializable
@@ -23,7 +23,7 @@ class PaginationFlow : DialogueFlow() {
 
     @Serializable
     data class SamplePaginationState(
-        override val page: Int
+        override val page: Int,
     ) : MessageState, WithPagination<SamplePaginationState> {
         override fun withPage(page: Int) = copy(page = page)
 

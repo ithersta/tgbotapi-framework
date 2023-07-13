@@ -1,7 +1,9 @@
-package com.ithersta.tgbotapi.builders
+package com.ithersta.tgbotapi.autoconfigure
 
 import com.ithersta.tgbotapi.basetypes.MessageState
 import com.ithersta.tgbotapi.basetypes.Role
+import com.ithersta.tgbotapi.builders.StateSpec
+import com.ithersta.tgbotapi.builders.StateSpecBuilder
 import com.ithersta.tgbotapi.core.OnActionHandler
 import com.ithersta.tgbotapi.core.StateSpec
 import dev.inmo.tgbotapi.types.BotCommand
@@ -29,15 +31,7 @@ public abstract class DialogueFlow {
         priority: Int = 0,
         handleGlobalUpdates: Boolean = true,
         block: StateSpecBuilder<R, S>.() -> Unit,
-    ): StateSpec<R, S> = StateSpecBuilder(
-        priority,
-        stateMapper = { it as? S },
-        roleMapper = { it as? R },
-        handleGlobalUpdates,
-    )
-        .apply(block)
-        .build()
-        .also { add(it) }
+    ): StateSpec<R, S> = StateSpec<R, S>(priority, handleGlobalUpdates, block).also { add(it) }
 
     /**
      * Constructs [StateSpec] handling a command.

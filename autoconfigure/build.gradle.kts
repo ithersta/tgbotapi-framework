@@ -13,6 +13,10 @@ dependencies {
     implementation(libs.ktor.client.okhttp)
 }
 
+kotlin {
+    explicitApi()
+}
+
 tasks.getByName<Test>("test") {
     useJUnitPlatform()
 }
