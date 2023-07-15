@@ -1,15 +1,13 @@
 package com.ithersta.tgbotapi.autoconfigure
 
-import com.ithersta.tgbotapi.core.Dispatcher
 import com.ithersta.tgbotapi.core.GetRole
 import com.ithersta.tgbotapi.core.runner.StatefulRunner
 import com.ithersta.tgbotapi.init.BotConfigurer
-import com.ithersta.tgbotapi.init.configure
 import com.ithersta.tgbotapi.init.plugins.EmptyStatePlugin
 import com.ithersta.tgbotapi.init.plugins.Pagination
+import com.ithersta.tgbotapi.init.startBot
 import com.ithersta.tgbotapi.persistence.MessageRepository
 import com.ithersta.tgbotapi.sqlite.SqliteMessageRepository
-import dev.inmo.tgbotapi.bot.TelegramBot
 import dev.inmo.tgbotapi.bot.ktor.telegramBot
 import dev.inmo.tgbotapi.bot.settings.limiters.CommonLimiter
 import io.ktor.client.*
@@ -17,28 +15,27 @@ import io.ktor.client.engine.okhttp.*
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.protobuf.ProtoBuf
+import org.koin.core.Koin
 import org.koin.core.KoinApplication
 import java.io.File
 
-public suspend fun KoinApplication.autoconfigure(
-    serializersModule: SerializersModule,
-    configure: BotConfigurer.() -> Unit = {},
+public fun BotConfigurer.autoconfigure(koin: Koin) {
+    install(EmptyStatePlugin)
+    install(Pagination)
+
+    updateTransformers(DefaultUpdateTransformers)
+    messageRepository { defaultMessageRepository(it) }
+    addAll(koin.getAll<StatefulRunner>())
+    addAll(koin.getAll<DialogueFlow>().flatMap { it.stateSpecs })
+    getRole(koin.get<GetRole>())
+    telegramBot(defaultTelegramBot())
+}
+
+public suspend fun KoinApplication.autoconfigureBot(
+    configure: BotConfigurer.() -> Unit,
 ) {
-    val getRole = koin.get<GetRole>()
-    val stateSpecs = koin.getAll<DialogueFlow>().flatMap { it.stateSpecs }
-    val telegramBot = koin.getOrNull<TelegramBot>() ?: defaultTelegramBot()
-    val runners = koin.getAll<StatefulRunner>()
-    val updateTransformers = koin.getOrNull<Dispatcher.UpdateTransformers>() ?: DefaultUpdateTransformers
-    telegramBot.configure(
-        messageRepository = { koin.getOrNull<MessageRepository>() ?: defaultMessageRepository(it) },
-        updateTransformers = updateTransformers,
-        getRole = getRole,
-    ) {
-        install(EmptyStatePlugin)
-        install(Pagination)
-        addAll(runners)
-        addAll(stateSpecs)
-        add(serializersModule)
+    startBot {
+        autoconfigure(koin)
         configure()
     }
 }

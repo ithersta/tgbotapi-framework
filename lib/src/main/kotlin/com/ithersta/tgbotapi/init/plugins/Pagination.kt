@@ -20,7 +20,7 @@ public val Pagination: Plugin = Plugin {
             state.edit { state.snapshot.withPage(it.page) }
         }
     })
-    add(SerializersModule {
+    serializersModule(SerializersModule {
         polymorphic(Action::class) {
             subclass(GoToPageAction::class)
         }

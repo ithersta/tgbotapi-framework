@@ -6,7 +6,7 @@ import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.modules.subclass
 
 public val EmptyStatePlugin: Plugin = Plugin {
-    add(SerializersModule {
+    serializersModule(SerializersModule {
         polymorphic(MessageState::class) {
             subclass(MessageState.Empty::class)
         }

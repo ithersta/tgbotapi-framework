@@ -95,18 +95,6 @@ class Processor(
             )
             .build()
             .writeTo(codeGenerator = codeGenerator, dependencies = dependencies)
-        FileSpec
-            .scriptBuilder(packageName = packageName, fileName = "Main")
-            .addFunction(
-                FunSpec
-                    .builder("autoconfigure")
-                    .receiver(ClassName("org.koin.core", "KoinApplication"))
-                    .addModifiers(KModifier.SUSPEND)
-                    .addCode("return autoconfigure(generatedSerializersModule())")
-                    .build(),
-            )
-            .build()
-            .writeTo(codeGenerator = codeGenerator, aggregating = false)
     }
 }
 
