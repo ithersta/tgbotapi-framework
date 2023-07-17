@@ -53,7 +53,7 @@ public class Dispatcher(
                         unboundStateAccessor = unboundStateAccessor
                     )
                     val context = HandlerContextImpl(bot, stateAccessor, chat, null, getRole()) {
-                        updateCommands(chat.id, getRole)
+                        updateCommands(chat.id, getRole())
                     }
                     handleOnNew(context)
                 }) { exception, _ ->
@@ -110,7 +110,7 @@ public class Dispatcher(
             unboundStateAccessor = unboundStateAccessor
         )
         val context = HandlerContextImpl(bot, stateAccessor, chat, messageId, getRole()) {
-            updateCommands(chat.id, getRole)
+            updateCommands(chat.id, getRole())
         }
         return handle(context)
     }
