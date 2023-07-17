@@ -86,14 +86,14 @@ public class Dispatcher(
             unboundStateAccessor = unboundStateAccessor
         )
         val context = HandlerContextImpl(bot, stateAccessor, chat, messageId, getRole()) {
-            updateCommands(chat.id, getRole)
+            updateCommands(chat.id, getRole())
         }
         handle(context, update.onSuccess(), listOfNotNull(data, action, action?.to(data)))
     }
 
-    private suspend fun BehaviourContext.updateCommands(chatId: ChatIdentifier, getRole: suspend () -> Role) {
+    private suspend fun BehaviourContext.updateCommands(chatId: ChatIdentifier, role: Role) {
         val scope = BotCommandScope.Chat(chatId)
-        setMyCommands(stateSpecs.flatMap { it.commands(getRole()) }, scope)
+        setMyCommands(stateSpecs.flatMap { it.commands(role) }, scope)
     }
 
     private suspend fun <M : MessageId?> BehaviourContext.handleStateChange(
