@@ -8,21 +8,9 @@ import com.ithersta.tgbotapi.core.OnEditHandler
 import com.ithersta.tgbotapi.core.OnNewHandler
 import com.ithersta.tgbotapi.core.StateSpec
 import com.ithersta.tgbotapi.persistence.PersistedMessage
-import dev.inmo.tgbotapi.bot.TelegramBot
-import dev.inmo.tgbotapi.bot.exceptions.MessageIsNotModifiedException
-import dev.inmo.tgbotapi.extensions.api.edit.edit
-import dev.inmo.tgbotapi.extensions.api.send.media.sendPhoto
-import dev.inmo.tgbotapi.extensions.api.send.send
 import dev.inmo.tgbotapi.types.BotCommand
-import dev.inmo.tgbotapi.types.files.Photo
-import dev.inmo.tgbotapi.types.media.TelegramMediaPhoto
 import dev.inmo.tgbotapi.types.message.abstracts.ChatEventMessage
 import dev.inmo.tgbotapi.types.message.abstracts.ContentMessage
-import dev.inmo.tgbotapi.types.message.abstracts.Message
-import dev.inmo.tgbotapi.types.message.content.MessageContent
-import dev.inmo.tgbotapi.types.message.content.TextMessage
-import dev.inmo.tgbotapi.types.message.content.TextedContent
-import korlibs.time.DateTime
 import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.full.isSubtypeOf
 import kotlin.reflect.full.starProjectedType
@@ -55,7 +43,7 @@ public class StateSpecBuilder<R : Role, S : MessageState> @PublishedApi internal
                     chatId = chat.id.chatId,
                     messageId = message.messageId,
                     state = state.snapshot,
-                    handleGlobalUpdates = handleGlobalUpdates,
+                    handleGlobalUpdates = this@StateSpecBuilder.handleGlobalUpdates,
                     actions = template.actions,
                 ),
             )
@@ -69,7 +57,7 @@ public class StateSpecBuilder<R : Role, S : MessageState> @PublishedApi internal
                     chatId = chat.id.chatId,
                     messageId = messageId,
                     state = state.snapshot,
-                    handleGlobalUpdates = handleGlobalUpdates,
+                    handleGlobalUpdates = this@StateSpecBuilder.handleGlobalUpdates,
                     actions = template.actions,
                 ),
             )
@@ -95,7 +83,12 @@ public class StateSpecBuilder<R : Role, S : MessageState> @PublishedApi internal
     public fun onNew(handler: OnNewHandler<R, S>) {
         _onNew {
             handler().also {
-                state.persist(PersistedMessage(chat.id.chatId, it.messageId, state.snapshot, handleGlobalUpdates))
+                state.persist(
+                    PersistedMessage(
+                        chat.id.chatId, it.messageId, state.snapshot,
+                        this@StateSpecBuilder.handleGlobalUpdates
+                    )
+                )
             }
         }
     }
@@ -103,7 +96,12 @@ public class StateSpecBuilder<R : Role, S : MessageState> @PublishedApi internal
     public fun onEdit(handler: OnEditHandler<R, S>) {
         _onEdit {
             handler().also {
-                state.persist(PersistedMessage(chat.id.chatId, it.messageId, state.snapshot, handleGlobalUpdates))
+                state.persist(
+                    PersistedMessage(
+                        chat.id.chatId, it.messageId, state.snapshot,
+                        this@StateSpecBuilder.handleGlobalUpdates
+                    )
+                )
             }
         }
     }
