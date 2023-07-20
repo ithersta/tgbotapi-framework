@@ -16,6 +16,7 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.slf4j.LoggerFactory
 
 /**
  * [MessageRepository] implementation based on SQLite.
@@ -30,6 +31,7 @@ public class SqliteMessageRepository(
     jdbc: String = "jdbc:sqlite:states.db",
     private val historyDepth: Int = 200,
 ) : MessageRepository {
+    private val logger = LoggerFactory.getLogger(SqliteMessageRepository::class.java)
     private val pendingUpdates = MutableSharedFlow<Unit>()
 
     private val db = Database.connect(jdbc, "org.sqlite.JDBC").also {
@@ -68,7 +70,7 @@ public class SqliteMessageRepository(
             .firstOrNull()?.get(PersistedMessages.state)
     }?.runCatching {
         protoBuf.decodeFromByteArray<MessageState>(this)
-    }?.getOrNull()
+    }?.logFailure()?.getOrNull()
 
     override fun delete(chatId: Long, messageId: Long): Unit = transaction(db) {
         PersistedActions.deleteWhere {
@@ -89,7 +91,7 @@ public class SqliteMessageRepository(
             ?.let { it[PersistedMessages.state] to it[PersistedMessages.messageId] }
     }?.runCatching {
         protoBuf.decodeFromByteArray<MessageState>(first) to second
-    }?.getOrNull()
+    }?.logFailure()?.getOrNull()
 
     override fun getAction(chatId: Long, messageId: Long, key: String): Action? = transaction(db) {
         PersistedActions
@@ -103,7 +105,7 @@ public class SqliteMessageRepository(
             ?.get(PersistedActions.action)
     }?.runCatching {
         protoBuf.decodeFromByteArray<Action>(this)
-    }?.getOrNull()
+    }?.logFailure()?.getOrNull()
 
     override suspend fun save(pendingState: PendingState.New) {
         val serializedState = protoBuf.encodeToByteArray<MessageState>(pendingState.state)
@@ -131,7 +133,7 @@ public class SqliteMessageRepository(
                         chatId = it[PendingStateUpdates.chatId],
                         state = runCatching {
                             protoBuf.decodeFromByteArray<MessageState>(it[PendingStateUpdates.state])
-                        }.getOrNull()
+                        }.logFailure().getOrNull()
                     )
                 }
             }.forEach {
@@ -153,5 +155,9 @@ public class SqliteMessageRepository(
         PersistedMessages.deleteWhere {
             (PersistedMessages.chatId eq chatId) and (messageId less lastKeptMessageId)
         }
+    }
+
+    private fun <T> Result<T>.logFailure(): Result<T> = onFailure { exception ->
+        logger.error("Couldn't deserialize", exception)
     }
 }
