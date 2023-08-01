@@ -15,7 +15,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  PRODUCT: Writerside/t
+  INSTANCE: Writerside/t
   ARTIFACT: webHelpT2-all.zip
   DOCKER_VERSION: 2.1.1479-p3869
 
