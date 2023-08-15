@@ -1,10 +1,11 @@
 package com.ithersta.tgbotapi.builders
 
-import com.ithersta.tgbotapi.basetypes.Action
 import com.ithersta.tgbotapi.basetypes.MessageState
 import com.ithersta.tgbotapi.basetypes.Role
 import com.ithersta.tgbotapi.core.HandlerContext
 import com.ithersta.tgbotapi.core.StateAccessor
+import com.ithersta.tgbotapi.message.ActionButtonContext
+import com.ithersta.tgbotapi.message.ListActionButtonContext
 import com.ithersta.tgbotapi.persistence.PersistedAction
 import dev.inmo.tgbotapi.bot.TelegramBot
 import dev.inmo.tgbotapi.bot.exceptions.MessageIsNotModifiedException
@@ -12,8 +13,6 @@ import dev.inmo.tgbotapi.extensions.api.edit.edit
 import dev.inmo.tgbotapi.extensions.api.send.media.sendPhoto
 import dev.inmo.tgbotapi.extensions.api.send.send
 import dev.inmo.tgbotapi.extensions.utils.formatting.toMarkdownTexts
-import dev.inmo.tgbotapi.extensions.utils.types.buttons.InlineKeyboardRowBuilder
-import dev.inmo.tgbotapi.extensions.utils.types.buttons.dataButton
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.inlineKeyboard
 import dev.inmo.tgbotapi.requests.abstracts.FileId
 import dev.inmo.tgbotapi.requests.abstracts.InputFile
@@ -87,7 +86,8 @@ internal suspend fun TelegramBot.edit(
 @FrameworkDslMarker
 public class PersistedMessageTemplateBuilder<S : MessageState, R : Role, M : MessageId?>(
     context: HandlerContext<S, StateAccessor.Changing<S>, R, M>,
-) : HandlerContext<S, StateAccessor.Changing<S>, R, M> by context {
+) : HandlerContext<S, StateAccessor.Changing<S>, R, M> by context,
+    ActionButtonContext by ListActionButtonContext() {
     public var entities: List<TextSource> = emptyList()
     public var text: String
         get() = entities.toMarkdownTexts().joinToString("")
@@ -97,13 +97,6 @@ public class PersistedMessageTemplateBuilder<S : MessageState, R : Role, M : Mes
     public var keyboard: InlineKeyboardMarkup = inlineKeyboard { }
     public var photo: InputFile? = null
     internal var cacheKey: String? = null
-    private val persistedActions = mutableListOf<PersistedAction>()
-
-    public fun InlineKeyboardRowBuilder.actionButton(text: String, action: Action) {
-        val persistedAction = PersistedAction.from(action)
-        dataButton(text, persistedAction.key)
-        persistedActions.add(persistedAction)
-    }
 
     internal fun build() = MessageTemplate(
         entities = entities,

@@ -6,7 +6,8 @@ import com.ithersta.tgbotapi.autoconfigure.DialogueFlow
 import com.ithersta.tgbotapi.basetypes.Action
 import com.ithersta.tgbotapi.basetypes.MessageState
 import com.ithersta.tgbotapi.builders.fromResources
-import dev.inmo.tgbotapi.extensions.utils.types.buttons.inlineKeyboard
+import com.ithersta.tgbotapi.cache.photoFromResources
+import com.ithersta.tgbotapi.message.template.photo
 import dev.inmo.tgbotapi.utils.row
 import kotlinx.serialization.Serializable
 import org.koin.core.annotation.Single
@@ -25,10 +26,8 @@ class MultipleChoiceFlow : DialogueFlow() {
     }
 
     val multipleChoice = inState<DefaultRole, MultipleChoiceState> {
-        render {
-            text = "Что наденем?"
-            photo = fromResources("/a.jpg")
-            keyboard = inlineKeyboard {
+        message {
+            photo(photoFromResources("/a.jpg"), "Что наденем") {
                 Clothes.entries.forEach { clothes ->
                     row {
                         if (clothes in state.snapshot.selectedClothes) {

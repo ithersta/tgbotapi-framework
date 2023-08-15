@@ -7,6 +7,8 @@ import com.ithersta.tgbotapi.core.OnActionHandler
 import com.ithersta.tgbotapi.core.OnEditHandler
 import com.ithersta.tgbotapi.core.OnNewHandler
 import com.ithersta.tgbotapi.core.StateSpec
+import com.ithersta.tgbotapi.message.MessageContext
+import com.ithersta.tgbotapi.message.template.MessageTemplate
 import com.ithersta.tgbotapi.persistence.PersistedMessage
 import dev.inmo.tgbotapi.types.BotCommand
 import dev.inmo.tgbotapi.types.message.abstracts.ChatEventMessage
@@ -34,6 +36,7 @@ public class StateSpecBuilder<R : Role, S : MessageState> @PublishedApi internal
     private var onEditHandler: OnEditHandler<R, S>? = null
     private val handleGlobalUpdates get() = preferredHandleGlobalUpdates && hasNonActionTrigger
 
+    @Deprecated("Use message block instead")
     public fun render(block: suspend PersistedMessageTemplateBuilder<S, R, *>.() -> Unit) {
         _onNew {
             val template = PersistedMessageTemplateBuilder(this).apply { block() }.build()
@@ -63,6 +66,33 @@ public class StateSpecBuilder<R : Role, S : MessageState> @PublishedApi internal
             )
             message
         }
+    }
+
+    public fun message(block: suspend MessageContext<S, R, *>.() -> MessageTemplate) {
+        _onNewOrEdit {
+            val context = MessageContext(this)
+            val template = block(context)
+            val message = with(template) {
+                messageId?.let { messageId ->
+                    edit(chat, messageId)
+                } ?: send(chat)
+            }
+            state.persist(
+                PersistedMessage(
+                    chatId = chat.id.chatId,
+                    messageId = message.messageId,
+                    state = state.snapshot,
+                    handleGlobalUpdates = this@StateSpecBuilder.handleGlobalUpdates,
+                    actions = context.persistedActions,
+                ),
+            )
+            message
+        }
+    }
+
+    private fun _onNewOrEdit(handler: OnNewHandler<R, S>) {
+        _onNew(handler)
+        _onEdit(handler)
     }
 
     private fun _onNew(handler: OnNewHandler<R, S>) {
