@@ -7,8 +7,7 @@
 После первой отправки файл кэшируется и не отправляется повторно.
 
 ```kotlin
-render {
-    photo = fromResources("/photo.jpg")
-    …
+message {
+    photo(photoFromResources("/photo.jpg"))
 }
 ```

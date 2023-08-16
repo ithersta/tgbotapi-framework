@@ -33,14 +33,17 @@ val spec = inState<SampleRole, SampleState> {
 `Message`, чтобы бот мог ассоциировать состояние с сообщением.
 
 Когда требуется отправить текстовое сообщение с инлайн клавиатурой,
-можно воспользоваться блоком `render`, 
+можно воспользоваться блоком `message`, 
 `onNew` и `onEdit` будут сгенерированы автоматически.
 
 ```kotlin
 val spec = inState<…, …> {
-    render {
-        text = "Текст сообщения" // или entities = …
-        keyboard = inlineKeyboard { … }
+    message {
+        text("Текст сообщения") {
+            row {
+                actionButton(…, …)
+            }
+        }
     }
     …
 }

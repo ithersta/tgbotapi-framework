@@ -22,15 +22,14 @@ data class MultipleChoiceState(
 ) : MessageState
 ```
 
-Теперь реализуем `render` для нашего состояния.
+Теперь реализуем блок `message` для нашего состояния.
 Если одежда есть в списке выбранных,
 будем рисовать кнопку с галочкой, иначе – без.
 
 ```kotlin
 val multipleChoice = inState<DefaultRole, MultipleChoiceState> {
-  render {
-    text = "Что наденем?"
-    keyboard = inlineKeyboard {
+  message {
+    text("Что наденем?") {
       Clothes.values().forEach { clothes ->
         row {
           if (clothes in state.snapshot.selectedClothes) {

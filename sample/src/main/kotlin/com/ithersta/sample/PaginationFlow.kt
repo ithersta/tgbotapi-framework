@@ -8,7 +8,7 @@ import com.ithersta.tgbotapi.init.plugins.WithPagination
 import com.ithersta.tgbotapi.init.plugins.limit
 import com.ithersta.tgbotapi.init.plugins.navigationRow
 import com.ithersta.tgbotapi.init.plugins.offset
-import dev.inmo.tgbotapi.extensions.utils.types.buttons.inlineKeyboard
+import com.ithersta.tgbotapi.message.template.text
 import dev.inmo.tgbotapi.utils.row
 import kotlinx.serialization.Serializable
 import org.koin.core.annotation.Single
@@ -32,9 +32,8 @@ class PaginationFlow : DialogueFlow() {
     }
 
     val samplePagination = inState<Role, SamplePaginationState> {
-        render {
-            text = "Числа от 1 до 100"
-            keyboard = inlineKeyboard {
+        message {
+            text("Числа от 1 до 100") {
                 numbers.drop(offset).take(limit).forEach { number ->
                     row {
                         actionButton(number.toString(), SamplePaginationState.SampleAction)

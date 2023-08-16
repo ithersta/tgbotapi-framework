@@ -14,6 +14,26 @@ import java.util.concurrent.ConcurrentHashMap
 private val fileIdCache: ConcurrentHashMap<String, FileId> = ConcurrentHashMap()
 private val cacheChatId = ChatId(105293829)
 
+public suspend fun TelegramBot.cachedFile(key: String, input: () -> Input): FileId {
+    return cached(key, input) { chatId, file ->
+        sendDocument(chatId, file).content.media.fileId
+    }
+}
+
+public suspend fun TelegramBot.fileFromResources(path: String): FileId {
+    return cachedFile(path) { getResourceAsInput(path) }
+}
+
+public suspend fun TelegramBot.cachedPhoto(key: String, input: () -> Input): FileId {
+    return cached(key, input) { chatId, file ->
+        sendPhoto(chatId, file).content.media.fileId
+    }
+}
+
+public suspend fun TelegramBot.photoFromResources(path: String): FileId {
+    return cachedPhoto(path) { getResourceAsInput(path) }
+}
+
 private suspend fun TelegramBot.cached(
     key: String,
     input: () -> Input,
@@ -26,22 +46,5 @@ private suspend fun TelegramBot.cached(
     }
 }
 
-public suspend fun TelegramBot.cachedFile(key: String, input: () -> Input): FileId {
-    return cached(key, input) { chatId, file ->
-        sendDocument(chatId, file).content.media.fileId
-    }
-}
-
-public suspend inline fun TelegramBot.fileFromResources(path: String): FileId {
-    return cachedFile(path) { {}.javaClass.getResourceAsStream(path)?.asInput() ?: error("Resource not found") }
-}
-
-public suspend fun TelegramBot.cachedPhoto(key: String, input: () -> Input): FileId {
-    return cached(key, input) { chatId, file ->
-        sendPhoto(chatId, file).content.media.fileId
-    }
-}
-
-public suspend inline fun TelegramBot.photoFromResources(path: String): FileId {
-    return cachedPhoto(path) { {}.javaClass.getResourceAsStream(path)?.asInput() ?: error("Resource not found") }
-}
+private fun getResourceAsInput(path: String) =
+    {}.javaClass.getResourceAsStream(path)?.asInput() ?: error("Resource not found")

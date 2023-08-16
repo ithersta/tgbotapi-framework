@@ -24,12 +24,11 @@ data class SampleAction(
 
 ### Отправка кнопки
 Чтобы отправить кнопку с действием, можно воспользоваться функцией `actionButton`
-внутри блока `render`.
+внутри блока `message`.
 
 ```kotlin
-render {
-    …
-    keyboard = inlineKeyboard {
+message {
+    text(…) {
         row {
             actionButton("Какая-то кнопка", SampleAction(2))
         }

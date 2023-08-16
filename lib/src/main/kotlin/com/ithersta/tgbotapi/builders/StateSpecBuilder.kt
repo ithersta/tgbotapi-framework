@@ -68,6 +68,10 @@ public class StateSpecBuilder<R : Role, S : MessageState> @PublishedApi internal
         }
     }
 
+    /**
+     * Declares a message sent by the bot when entering the state.
+     * Defines both onNew and onEdit blocks.
+     */
     public fun message(block: suspend MessageContext<S, R, *>.() -> MessageTemplate) {
         _onNewOrEdit {
             val context = MessageContext(this)
@@ -191,8 +195,8 @@ public class StateSpecBuilder<R : Role, S : MessageState> @PublishedApi internal
 /**
  * Constructs [StateSpec].
  *
- * @param R the type of user role this spec applies for.
- * @param S the type of message state this spec applies for.
+ * @param R the user role this spec applies for.
+ * @param S the message state this spec applies for.
  * @param priority the priority of this spec, a spec with
  * a bigger priority is called first.
  * @param handleGlobalUpdates if set to true, this spec

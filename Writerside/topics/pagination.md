@@ -12,9 +12,8 @@ class SamplePaginationState : MessageState
 
 val samplePagination = inState<Role, SamplePaginationState> {
     val numbers = (1..100)
-    render {
-        text = "Числа от 1 до 100"
-        keyboard = inlineKeyboard {
+    message {
+        text("Числа от 1 до 100") {
             numbers.forEach { number ->
                 row {
                     actionButton(number.toString(), …)
@@ -42,7 +41,7 @@ val samplePagination = inState<Role, SamplePaginationState> {
 
 2. Изменим спецификацию.
 
-   Теперь в блоке `render` доступны инструменты для пагинации:
+   Теперь в блоке `message` доступны инструменты для пагинации:
 
    limit
    : количество элементов на одной странице
@@ -57,9 +56,8 @@ val samplePagination = inState<Role, SamplePaginationState> {
     ```kotlin
     val samplePagination = inState<Role, SamplePaginationState> {
         val numbers = (1..100)
-        render {
-            text = "Числа от 1 до 100"
-            keyboard = inlineKeyboard {
+        message {
+            text("Числа от 1 до 100") {
                 numbers.drop(offset).take(limit).forEach { number ->
                     row {
                         actionButton(number.toString(), …)

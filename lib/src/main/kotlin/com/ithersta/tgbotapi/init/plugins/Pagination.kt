@@ -3,10 +3,10 @@ package com.ithersta.tgbotapi.init.plugins
 import com.ithersta.tgbotapi.basetypes.Action
 import com.ithersta.tgbotapi.basetypes.MessageState
 import com.ithersta.tgbotapi.basetypes.Role
-import com.ithersta.tgbotapi.builders.PersistedMessageTemplateBuilder
 import com.ithersta.tgbotapi.builders.StateSpec
 import com.ithersta.tgbotapi.core.HandlerContext
 import com.ithersta.tgbotapi.core.StateAccessor
+import com.ithersta.tgbotapi.message.ActionButtonContext
 import dev.inmo.tgbotapi.extensions.utils.types.buttons.InlineKeyboardBuilder
 import dev.inmo.tgbotapi.utils.row
 import kotlinx.serialization.Serializable
@@ -53,9 +53,11 @@ public val <S> HandlerContext<S, out StateAccessor<S>, *, *>.offset: Int
  * @param next the text on a next page button.
  */
 context (InlineKeyboardBuilder)
-public fun <S> PersistedMessageTemplateBuilder<S, *, *>.navigationRow(
+public fun <C, S> C.navigationRow(
     itemCount: Int, previous: String = "⬅️", next: String = "➡️",
-) where S : WithPagination<S>, S : MessageState {
+) where C : ActionButtonContext,
+        C : HandlerContext<S, StateAccessor.Changing<S>, *, *>,
+        S : WithPagination<S> {
     val page = state.snapshot.page
     val maxPage = ((itemCount - 1) / limit).coerceAtLeast(0)
     if (maxPage == 0 && page == 0) return
