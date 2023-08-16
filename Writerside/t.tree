@@ -9,6 +9,7 @@
     <toc-element topic="core.md">
         <toc-element topic="states.md"/>
         <toc-element topic="commands.md"/>
+        <toc-element topic="message.md"/>
         <toc-element topic="actions.md"/>
         <toc-element topic="pagination.md"/>
         <toc-element topic="photo.md"/>
