@@ -1,5 +1,5 @@
 [versions]
-kotlin = "1.9.0"
+kotlin = "1.9.10"
 inmo-tgbotapi = "9.1.0"
 koin = "3.4.3"
 koin-annotations = "1.2.2"
