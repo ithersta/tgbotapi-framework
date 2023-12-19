@@ -1,7 +1,7 @@
 [versions]
 kotlin = "1.9.10"
 inmo-tgbotapi = "9.1.0"
-koin = "3.4.3"
+koin = "3.5.3"
 koin-annotations = "1.2.2"
 kotlinx-serialization = "1.6.0"
 exposed = "0.42.1"
